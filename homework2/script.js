@@ -4,7 +4,7 @@ Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/07/2026
 Version: 2.0
-Description: Javascript utilities for Homework 2 review display and a few required edits.
+Description: Homework 2 JS for dynamic date, DOB range, slider value, review output, and password match.
 */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -14,10 +14,11 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function setToday() {
-  const today = new Date();
-  const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
   const el = document.getElementById("today");
-  if (el) el.textContent = today.toLocaleDateString(undefined, options);
+  if (!el) return;
+  const now = new Date();
+  const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+  el.textContent = now.toLocaleDateString(undefined, options);
 }
 
 function setDobRange() {
@@ -28,11 +29,11 @@ function setDobRange() {
   const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
 
-  dob.max = toISODate(max);
-  dob.min = toISODate(min);
+  dob.max = toISO(max);
+  dob.min = toISO(min);
 }
 
-function toISODate(d) {
+function toISO(d) {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
@@ -47,35 +48,36 @@ function updateHealthValue() {
 
 function clearReview() {
   const out = document.getElementById("reviewOutput");
-  if (out) out.innerHTML = "Click REVIEW to display your entered information here.";
-  const pwError = document.getElementById("pwError");
-  if (pwError) pwError.textContent = "";
-  const dobError = document.getElementById("dobError");
-  if (dobError) dobError.textContent = "";
+  if (out) out.textContent = "Click REVIEW to display your entered information here.";
+  setMsg("pwMsg", "");
+  setMsg("dobMsg", "");
 }
 
-function getCheckedValues(name) {
-  const items = document.querySelectorAll('input[name="' + name + '"]:checked');
-  const values = [];
-  for (let i = 0; i < items.length; i++) values.push(items[i].value);
-  return values;
+function setMsg(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
 }
 
-function getRadioValue(name) {
-  const item = document.querySelector('input[name="' + name + '"]:checked');
-  return item ? item.value : "";
+function getRadio(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : "";
 }
 
-function safeText(s) {
+function getChecks(name) {
+  const els = document.querySelectorAll('input[name="' + name + '"]:checked');
+  const vals = [];
+  for (let i = 0; i < els.length; i++) vals.push(els[i].value);
+  return vals;
+}
+
+function escapeHtml(s) {
   if (!s) return "";
-  return String(s).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function truncateZip(zip) {
   if (!zip) return "";
-  // If ZIP+4, keep first 5 digits
-  if (zip.length >= 5) return zip.substring(0, 5);
-  return zip;
+  return zip.substring(0, 5);
 }
 
 function reviewForm() {
@@ -83,91 +85,99 @@ function reviewForm() {
   const middleInitial = document.getElementById("middleInitial").value.trim();
   const lastName = document.getElementById("lastName").value.trim();
   const dob = document.getElementById("dob").value;
+
   const idNumber = document.getElementById("idNumber").value;
-  const email = document.getElementById("email").value.trim().toLowerCase();
-  document.getElementById("email").value = email;
+
+  const emailEl = document.getElementById("email");
+  let email = emailEl.value.trim().toLowerCase();
+  emailEl.value = email;
 
   const phone = document.getElementById("phone").value.trim();
+
   const addr1 = document.getElementById("addr1").value.trim();
   const addr2 = document.getElementById("addr2").value.trim();
   const city = document.getElementById("city").value.trim();
   const state = document.getElementById("state").value;
-  const zipRaw = document.getElementById("zip").value.trim();
-  const zip = truncateZip(zipRaw);
-  document.getElementById("zip").value = zip;
 
-  let userId = document.getElementById("userId").value.trim();
-  userId = userId.toLowerCase();
-  document.getElementById("userId").value = userId;
+  const zipEl = document.getElementById("zip");
+  let zip = zipEl.value.trim();
+  zip = truncateZip(zip);
+  zipEl.value = zip;
 
-  const password = document.getElementById("password").value;
-  const password2 = document.getElementById("password2").value;
+  const userIdEl = document.getElementById("userId");
+  let userId = userIdEl.value.trim().toLowerCase();
+  userIdEl.value = userId;
 
-  const gender = getRadioValue("gender");
-  const vaccinated = getRadioValue("vaccinated");
-  const insurance = getRadioValue("insurance");
+  const pw1 = document.getElementById("password").value;
+  const pw2 = document.getElementById("password2").value;
 
+  const gender = getRadio("gender");
+  const vaccinated = getRadio("vaccinated");
+  const insurance = getRadio("insurance");
+  const history = getChecks("history");
   const health = document.getElementById("health").value;
   const symptoms = document.getElementById("symptoms").value.trim();
 
-  const history = getCheckedValues("history");
-  const historyText = history.length ? history.join(", ") : "None selected";
+  // Required JS: password match
+  if (pw1 !== pw2) setMsg("pwMsg", "ERROR: Passwords do not match");
+  else setMsg("pwMsg", "");
 
-  // JS required check: password match
-  const pwError = document.getElementById("pwError");
-  if (pwError) pwError.textContent = "";
-  if (password !== password2) {
-    if (pwError) pwError.textContent = "ERROR: Passwords do not match";
-  }
-
-  // Simple DOB range message (HTML min/max does most of the work)
-  const dobError = document.getElementById("dobError");
-  if (dobError) dobError.textContent = "";
+  // DOB range message (HTML min/max handles most)
+  let dobStatus = "pass";
+  const dobMsg = document.getElementById("dobMsg");
+  if (dobMsg) dobMsg.textContent = "";
   if (dob) {
     const dobDate = new Date(dob + "T00:00:00");
     const now = new Date();
     const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
     const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (dobDate < min || dobDate > max) {
-      if (dobError) dobError.textContent = "ERROR: Date must be within last 120 years and not in the future.";
+      dobStatus = "ERROR: DOB out of range";
+      setMsg("dobMsg", "ERROR: Must be within last 120 years and not in the future.");
     }
   }
 
+  const historyText = history.length ? history.join(", ") : "None selected";
+  const pwStatus = (pw1 === pw2) ? "pass" : "ERROR: Passwords do not match";
+
   const output =
     "<table class='reviewTable'>" +
+      "<tr><th colspan='3'>PLEASE REVIEW THIS INFORMATION</th></tr>" +
 
-    "<tr><th colspan='3'>PLEASE REVIEW THIS INFORMATION</th></tr>" +
+      "<tr><td><strong>Name</strong></td><td>" +
+        escapeHtml(firstName + " " + middleInitial + " " + lastName) +
+      "</td><td>pass</td></tr>" +
 
-    "<tr><td><strong>Name</strong></td><td>" +
-      safeText(firstName + " " + middleInitial + " " + lastName) +
-    "</td><td></td></tr>" +
+      "<tr><td><strong>Date of Birth</strong></td><td>" +
+        escapeHtml(dob) +
+      "</td><td>" + escapeHtml(dobStatus) + "</td></tr>" +
 
-    "<tr><td><strong>Date of Birth</strong></td><td>" + safeText(dob) +
-    "</td><td>" + (dobError && dobError.textContent ? safeText(dobError.textContent) : "pass") + "</td></tr>" +
+      "<tr><td><strong>Email</strong></td><td>" +
+        escapeHtml(email) +
+      "</td><td>pass</td></tr>" +
 
-    "<tr><td><strong>Email</strong></td><td>" + safeText(email) + "</td><td>pass</td></tr>" +
-    "<tr><td><strong>Phone</strong></td><td>" + safeText(phone) + "</td><td>pass</td></tr>" +
+      "<tr><td><strong>Phone</strong></td><td>" +
+        escapeHtml(phone) +
+      "</td><td>pass</td></tr>" +
 
-    "<tr><td><strong>Address</strong></td><td>" +
-      safeText(addr1) + "<br>" + safeText(addr2) + "<br>" +
-      safeText(city + ", " + state + " " + zip) +
-    "</td><td>" + (zip ? "pass" : "ERROR: Missing Zip Code") + "</td></tr>" +
+      "<tr><td><strong>Address</strong></td><td>" +
+        escapeHtml(addr1) + "<br>" +
+        escapeHtml(addr2) + "<br>" +
+        escapeHtml(city + ", " + state + " " + zip) +
+      "</td><td>" + (zip ? "pass" : "ERROR: Missing Zip Code") + "</td></tr>" +
 
-    "<tr><th colspan='3'>REQUESTED INFO</th></tr>" +
-    "<tr><td><strong>History</strong></td><td colspan='2'>" + safeText(historyText) + "</td></tr>" +
-    "<tr><td><strong>Gender</strong></td><td colspan='2'>" + safeText(gender) + "</td></tr>" +
-    "<tr><td><strong>Vaccinated?</strong></td><td colspan='2'>" + safeText(vaccinated) + "</td></tr>" +
-    "<tr><td><strong>Insurance?</strong></td><td colspan='2'>" + safeText(insurance) + "</td></tr>" +
-    "<tr><td><strong>Health (1-10)</strong></td><td colspan='2'>" + safeText(health) + "</td></tr>" +
-    "<tr><td><strong>Symptoms</strong></td><td colspan='2'>" + safeText(symptoms) + "</td></tr>" +
+      "<tr><th colspan='3'>REQUESTED INFO</th></tr>" +
+      "<tr><td><strong>History</strong></td><td colspan='2'>" + escapeHtml(historyText) + "</td></tr>" +
+      "<tr><td><strong>Gender</strong></td><td colspan='2'>" + escapeHtml(gender) + "</td></tr>" +
+      "<tr><td><strong>Vaccinated?</strong></td><td colspan='2'>" + escapeHtml(vaccinated) + "</td></tr>" +
+      "<tr><td><strong>Insurance?</strong></td><td colspan='2'>" + escapeHtml(insurance) + "</td></tr>" +
+      "<tr><td><strong>Health (1-10)</strong></td><td colspan='2'>" + escapeHtml(health) + "</td></tr>" +
+      "<tr><td><strong>Symptoms</strong></td><td colspan='2'>" + escapeHtml(symptoms) + "</td></tr>" +
 
-    "<tr><th colspan='3'>ACCOUNT</th></tr>" +
-    "<tr><td><strong>User ID</strong></td><td>" + safeText(userId) + "</td><td>pass</td></tr>" +
-    "<tr><td><strong>ID Number</strong></td><td>" + (idNumber ? "Entered" : "") + "</td><td>pass</td></tr>" +
-    "<tr><td><strong>Password</strong></td><td>(hidden)</td><td>" +
-      (pwError && pwError.textContent ? safeText(pwError.textContent) : "pass") +
-    "</td></tr>" +
-
+      "<tr><th colspan='3'>ACCOUNT</th></tr>" +
+      "<tr><td><strong>User ID</strong></td><td>" + escapeHtml(userId) + "</td><td>pass</td></tr>" +
+      "<tr><td><strong>ID Number</strong></td><td>" + (idNumber ? "Entered" : "") + "</td><td>pass</td></tr>" +
+      "<tr><td><strong>Password</strong></td><td>(hidden)</td><td>" + escapeHtml(pwStatus) + "</td></tr>" +
     "</table>";
 
   const out = document.getElementById("reviewOutput");
