@@ -1,1 +1,298 @@
+/*
+Program name: style.css
+Author: Kai Osunmo
+Date created: 02/07/2026
+Date last edited: 02/07/2026
+Version: 2.0
+Description: External stylesheet for MIS 3371 Homework 2 patient form.
+*/
 
+body {
+  margin: 0;
+  background-color: #eef2f5;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1a1a1a;
+}
+
+#page {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+#banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background-color: #1f2a44;
+  color: #ffffff;
+  border-bottom: 4px solid #ffd166;
+}
+
+#logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+#bannerText h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #ffd166;
+}
+
+#bannerText p {
+  margin: 6px 0 0 0;
+}
+
+#content {
+  padding: 18px;
+}
+
+h2 {
+  margin-top: 0;
+  color: #1f2a44;
+}
+
+.formTable {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  border: 1px solid #cfd8dc;
+}
+
+.formTable th {
+  text-align: left;
+  padding: 10px;
+  background-color: #f3f6f8;
+  color: #1f2a44;
+  border-bottom: 1px solid #cfd8dc;
+}
+
+.formTable td {
+  padding: 10px;
+  border-bottom: 1px solid #e6ecef;
+  vertical-align: top;
+}
+
+.labelCell {
+  width: 190px;
+  font-weight: bold;
+  color: #263238;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  max-width: 360px;
+  padding: 8px;
+  border: 1px solid #b0bec5;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+textarea {
+  max-width: 720px;
+}
+
+.wideInput {
+  max-width: 720px;
+}
+
+.inline {
+  margin-right: 14px;
+}
+
+.choicesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 6px 12px;
+}
+
+.fieldMsg {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 12px;
+  color: #607d8b;
+}
+
+.errorMsg {
+  color: #b00020;
+  font-weight: bold;
+}
+
+.rangeValue {
+  margin-left: 10px;
+  font-weight: bold;
+  color: #1f2a44;
+}
+
+.buttonsRow {
+  text-align: right;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-bottom: none;
+}
+
+.btnPrimary,
+.btnSecondary,
+.btnFooter {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btnPrimary {
+  background-color: #1f2a44;
+  color: white;
+  margin-left: 10px;
+}
+
+.btnSecondary {
+  background-color: #cfd8dc;
+  color: #1a1a1a;
+  margin-left: 8px;
+}
+
+.btnFooter {
+  background-color: #ffd166;
+  color: #1a1a1a;
+}
+
+#reviewBox {
+  margin-top: 18px;
+  padding: 14px;
+  background-color: #ffffff;
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+}
+
+.reviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.reviewTable th {
+  text-align: left;
+  background-color: #f3f6f8;
+  padding: 8px;
+  border-bottom: 1px solid #cfd8dc;
+}
+
+.reviewTable td {
+  padding: 8px;
+  border-bottom: 1px solid #e6ecef;
+  vertical-align: top;
+}
+
+#footer {
+  margin: 18px 18px 28px 18px;
+  padding: 14px;
+  background-color: #1f2a44;
+  color: #ffffff;
+  border-radius: 10px;
+}
+
+.footerRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.socialLinks a {
+  color: #ffd166;
+  text-decoration: none;
+  margin-left: 10px;
+}
+
+.socialLinks a:visited {
+  color: #ffb703;
+}
+
+.socialLinks a:hover {
+  text-decoration: underline;
+}
+
+.reviewCard {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #cfd6dd;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.reviewCard h3 {
+  margin: 0 0 6px 0;
+}
+
+.reviewSub {
+  margin: 0 0 12px 0;
+  color: #4b5563;
+}
+
+.reviewOk {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef7ee;
+  border: 1px solid #cfe7cf;
+  margin-bottom: 12px;
+}
+
+.reviewNotice {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff4e6;
+  border: 1px solid #ffd3a3;
+  margin-bottom: 12px;
+}
+
+.reviewNotice ul {
+  margin: 6px 0 0 18px;
+}
+
+.reviewSection {
+  margin-top: 14px;
+}
+
+.reviewTitle {
+  font-weight: 700;
+  padding: 8px 10px;
+  background: #f3f6f9;
+  border: 1px solid #e3e8ee;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.reviewTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reviewTable td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eef2f6;
+  vertical-align: top;
+}
+
+.reviewTable td:first-child {
+  width: 220px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.reviewAddress {
+  padding: 10px 8px;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  background: #fbfdff;
+}
