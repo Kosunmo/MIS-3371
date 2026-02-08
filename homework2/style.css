@@ -101,7 +101,6 @@ textarea {
 }
 
 .wideInput {
-  width: 100%;
   max-width: 720px;
 }
 
@@ -115,16 +114,15 @@ textarea {
   gap: 6px 12px;
 }
 
-.hint {
+.fieldMsg {
+  display: inline-block;
   margin-left: 10px;
-  color: #607d8b;
   font-size: 12px;
+  color: #607d8b;
 }
 
-.error {
-  margin-left: 10px;
+.errorMsg {
   color: #b00020;
-  font-size: 12px;
   font-weight: bold;
 }
 
