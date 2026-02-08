@@ -10,12 +10,13 @@ Description: Homework 2 JS for dynamic date, DOB range, slider value, review out
 document.addEventListener("DOMContentLoaded", function () {
   setToday();
   setDobRange();
-  updateHealthValue();
+  hookSlider();
 });
 
 function setToday() {
   const el = document.getElementById("today");
   if (!el) return;
+
   const now = new Date();
   const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
   el.textContent = now.toLocaleDateString(undefined, options);
@@ -38,6 +39,13 @@ function toISO(d) {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return yyyy + "-" + mm + "-" + dd;
+}
+
+function hookSlider() {
+  const slider = document.getElementById("health");
+  if (!slider) return;
+  slider.addEventListener("input", updateHealthValue);
+  updateHealthValue();
 }
 
 function updateHealthValue() {
@@ -71,8 +79,16 @@ function getChecks(name) {
 }
 
 function escapeHtml(s) {
-  if (!s) return "";
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  if (s === null || s === undefined) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function displayOrNone(value) {
+  const v = (value || "").toString().trim();
+  return v ? v : "None selected";
 }
 
 function truncateZip(zip) {
@@ -81,37 +97,6 @@ function truncateZip(zip) {
 }
 
 function reviewForm() {
-  
-  function displayOrNone(value) {
-    const v = (value || "").toString().trim();
-    return v ? v : "None selected";
-  }
-
-  function safe(value) {
-    return escapeHtml(displayOrNone(value));
-  }
-
-  function yesNo(value) {
-    return value ? "Yes" : "No";
-  }
-
-  function formatDate(iso) {
-
-    return displayOrNone(iso);
-  }
-
-  function dobFriendlyNote(dobIso) {
-    if (!dobIso) return "";
-    const dobDate = new Date(dobIso + "T00:00:00");
-    const now = new Date();
-
-    const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
-    const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    if (dobDate < min) return "Please double-check: date seems more than 120 years ago.";
-    if (dobDate > max) return "Please double-check: date of birth cannot be in the future.";
-    return "";
-  }
 
   const firstName = document.getElementById("firstName").value.trim();
   const middleInitial = document.getElementById("middleInitial").value.trim();
@@ -143,7 +128,7 @@ function reviewForm() {
   const pw1 = document.getElementById("password").value;
   const pw2 = document.getElementById("password2").value;
 
-  const pwMsg = document.getElementById("pwMsg");
+
   if (pw1 || pw2) {
     if (pw1 !== pw2) setMsg("pwMsg", "Passwords do not match. Please re-enter them.");
     else setMsg("pwMsg", "");
@@ -151,8 +136,16 @@ function reviewForm() {
     setMsg("pwMsg", "");
   }
 
-  const dobNote = dobFriendlyNote(dob);
-  setMsg("dobMsg", dobNote);
+  
+  setMsg("dobMsg", "");
+  if (dob) {
+    const dobDate = new Date(dob + "T00:00:00");
+    const now = new Date();
+    const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
+    const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (dobDate < min) setMsg("dobMsg", "Please double-check: date seems more than 120 years ago.");
+    if (dobDate > max) setMsg("dobMsg", "Please double-check: date of birth cannot be in the future.");
+  }
 
   const gender = getRadio("gender");
   const vaccinated = getRadio("vaccinated");
@@ -161,8 +154,9 @@ function reviewForm() {
   const health = document.getElementById("health").value;
   const symptoms = document.getElementById("symptoms").value.trim();
 
-  const nameParts = [firstName, middleInitial, lastName].filter(Boolean);
-  const fullName = nameParts.join(" ");
+
+  const fullName = [firstName, middleInitial, lastName].filter(Boolean).join(" ");
+  const historyText = history.length ? history.join(", ") : "None selected";
 
   const anyAddressEntered = !!(addr1 || addr2 || city || state || zip);
   let addressDisplay = "None selected";
@@ -175,60 +169,31 @@ function reviewForm() {
     addressDisplay = lines.join("<br>");
   }
 
-  const historyText = history.length ? history.join(", ") : "None selected";
-
-  const notes = [];
-  if ((pw1 || pw2) && pw1 !== pw2) notes.push("Please fix: passwords do not match.");
-  if (dobNote) notes.push(dobNote);
 
   const output =
-    "<div class='reviewCard'>" +
-      "<h3>Review Your Information</h3>" +
-      "<p class='reviewSub'>Please confirm everything looks correct before submitting.</p>" +
+    "<table class='reviewTable'>" +
+      "<tr><th colspan='2'>Please review your information</th></tr>" +
+      "<tr><td><strong>Name</strong></td><td>" + escapeHtml(displayOrNone(fullName)) + "</td></tr>" +
+      "<tr><td><strong>Date of Birth</strong></td><td>" + escapeHtml(displayOrNone(dob)) + "</td></tr>" +
+      "<tr><td><strong>Email</strong></td><td>" + escapeHtml(displayOrNone(email)) + "</td></tr>" +
+      "<tr><td><strong>Phone</strong></td><td>" + escapeHtml(displayOrNone(phone)) + "</td></tr>" +
+      "<tr><td><strong>ID Number</strong></td><td>" + (idNumber ? "Provided" : "None selected") + "</td></tr>" +
 
-      (notes.length
-        ? "<div class='reviewNotice'><strong>Quick note:</strong><ul>" +
-            notes.map(n => "<li>" + escapeHtml(n) + "</li>").join("") +
-          "</ul></div>"
-        : "<div class='reviewOk'>Looks good so far.</div>"
-      ) +
+      "<tr><th colspan='2'>Address</th></tr>" +
+      "<tr><td colspan='2'>" + addressDisplay + "</td></tr>" +
 
-      "<div class='reviewSection'>" +
-        "<div class='reviewTitle'>Patient Information</div>" +
-        "<table class='reviewTable'>" +
-          "<tr><td>Name</td><td>" + safe(fullName) + "</td></tr>" +
-          "<tr><td>Date of Birth</td><td>" + escapeHtml(formatDate(dob)) + "</td></tr>" +
-          "<tr><td>Email</td><td>" + safe(email) + "</td></tr>" +
-          "<tr><td>Phone</td><td>" + safe(phone) + "</td></tr>" +
-          "<tr><td>ID Number</td><td>" + escapeHtml(idNumber ? \"Provided\" : \"None selected\") + "</td></tr>" +
-        "</table>" +
-      "</div>" +
+      "<tr><th colspan='2'>Health Info</th></tr>" +
+      "<tr><td><strong>History</strong></td><td>" + escapeHtml(displayOrNone(historyText)) + "</td></tr>" +
+      "<tr><td><strong>Gender</strong></td><td>" + escapeHtml(displayOrNone(gender)) + "</td></tr>" +
+      "<tr><td><strong>Vaccinated</strong></td><td>" + escapeHtml(displayOrNone(vaccinated)) + "</td></tr>" +
+      "<tr><td><strong>Insurance</strong></td><td>" + escapeHtml(displayOrNone(insurance)) + "</td></tr>" +
+      "<tr><td><strong>Health (1-10)</strong></td><td>" + escapeHtml(displayOrNone(health)) + "</td></tr>" +
+      "<tr><td><strong>Symptoms</strong></td><td>" + escapeHtml(displayOrNone(symptoms)) + "</td></tr>" +
 
-      "<div class='reviewSection'>" +
-        "<div class='reviewTitle'>Address</div>" +
-        "<div class='reviewAddress'>" + addressDisplay + "</div>" +
-      "</div>" +
-
-      "<div class='reviewSection'>" +
-        "<div class='reviewTitle'>Health History & Preferences</div>" +
-        "<table class='reviewTable'>" +
-          "<tr><td>History</td><td>" + escapeHtml(displayOrNone(historyText)) + "</td></tr>" +
-          "<tr><td>Gender</td><td>" + safe(gender) + "</td></tr>" +
-          "<tr><td>Vaccinated</td><td>" + safe(vaccinated) + "</td></tr>" +
-          "<tr><td>Insurance</td><td>" + safe(insurance) + "</td></tr>" +
-          "<tr><td>Health (1–10)</td><td>" + safe(health) + "</td></tr>" +
-          "<tr><td>Symptoms</td><td>" + safe(symptoms) + "</td></tr>" +
-        "</table>" +
-      "</div>" +
-
-      "<div class='reviewSection'>" +
-        "<div class='reviewTitle'>Account</div>" +
-        "<table class='reviewTable'>" +
-          "<tr><td>User ID</td><td>" + safe(userId) + "</td></tr>" +
-          "<tr><td>Password</td><td>" + ((pw1 || pw2) ? \"Hidden\" : \"None selected\") + "</td></tr>" +
-        "</table>" +
-      "</div>" +
-    "</div>";
+      "<tr><th colspan='2'>Account</th></tr>" +
+      "<tr><td><strong>User ID</strong></td><td>" + escapeHtml(displayOrNone(userId)) + "</td></tr>" +
+      "<tr><td><strong>Password</strong></td><td>Hidden</td></tr>" +
+    "</table>";
 
   const out = document.getElementById("reviewOutput");
   if (out) out.innerHTML = output;
