@@ -3,8 +3,8 @@ Program name: thankyou.html
 Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/07/2026
-Version: 2.0
-Description: Thank-you page for MIS 3371 Homework 2.
+Version: 3.0
+Description: Thank you page shown after a successful form submission.
 -->
 
 <!DOCTYPE html>
@@ -12,44 +12,52 @@ Description: Thank-you page for MIS 3371 Homework 2.
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Thank You</title>
+  <title>Thank You - Northside Family Medicine</title>
+
   <link rel="stylesheet" href="style.css" />
+
+  <script src="script.js" defer></script>
 </head>
 
 <body>
-  <div id="page">
-
-    <div id="banner">
-      <img id="logo" src="logo.png" alt="Clinic Logo" />
-      <div id="bannerText">
-        <h1>Northside Family Medicine</h1>
-        <p>Thank you page</p>
-      </div>
+  <div id="banner">
+    <img src="logo.png" alt="Clinic Logo" />
+    <div>
+      <h1>Northside Family Medicine</h1>
+      <p>Today is: <span id="today">Loading...</span></p>
     </div>
+  </div>
 
-    <div id="content">
+  <div class="pageWrap">
+    <div class="formCard">
       <h2>Thank you for your submission.</h2>
       <p>We will be contacting you shortly.</p>
-      <p><a href="patient-form.html">Return to the form</a></p>
-    </div>
 
-    <div id="footer">
-      <div class="footerRow">
-        <div>
-          <strong>Northside Family Medicine</strong><br />
-          PO BOX 18881<br />
-          Sugar Land TX 77496
-        </div>
-        <div>
-          <button type="button" class="btnFooter" onclick="alert('Contact us at info@example.com');">Contact Us</button>
-        </div>
-        <div class="socialLinks">
-          <a href="https://twitter.com" target="_blank" rel="noopener">Twitter</a>
-          <a href="https://facebook.com" target="_blank" rel="noopener">Facebook</a>
-        </div>
+      <div style="margin-top: 16px;">
+        <a class="btn" href="homework3.html">Back to Form</a>
       </div>
     </div>
-
   </div>
+
+  <div id="footer">
+    <div class="footerLeft">
+      <strong>Northside Family Medicine</strong><br />
+      PO BOX 18881<br />
+      Sugar Land TX 77496
+    </div>
+
+    <div class="footerCenter">
+      <button type="button" class="btn btnGold" onclick="alert('Contact us at info@example.com');">
+        Contact Us
+      </button>
+    </div>
+
+    <div class="footerRight">
+      <a href="https://twitter.com" target="_blank" rel="noopener">Twitter</a>
+      <a href="https://facebook.com" target="_blank" rel="noopener">Facebook</a>
+    </div>
+  </div>
+
+  <!-- End of document -->
 </body>
 </html>
