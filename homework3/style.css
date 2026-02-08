@@ -296,3 +296,9 @@ textarea {
   border-radius: 8px;
   background: #fbfdff;
 }
+
+.hintText{
+  font-size: 13px;
+  color: #555;
+  margin-left: 10px;
+}
