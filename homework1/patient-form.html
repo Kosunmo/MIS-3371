@@ -19,12 +19,14 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
 <script>
   function showDate() {
     const today = new Date();
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const el = document.getElementById('today');
+    const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+    const el = document.getElementById("today");
     if (el) el.textContent = today.toLocaleDateString(undefined, options);
   }
 
-  function hookHealthSlider() {
+  window.onload = function () {
+    showDate();
+
     const slider = document.getElementById("healthScale");
     const out = document.getElementById("healthValue");
     if (!slider || !out) return;
@@ -34,10 +36,10 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
     slider.addEventListener("input", function () {
       out.textContent = slider.value;
     });
-  }
+  };
 </script>
 
-<body onload="showDate(); hookHealthSlider();">
+<body>
 
   <div id="page">
 
