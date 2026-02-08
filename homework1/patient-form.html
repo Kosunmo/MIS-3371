@@ -36,12 +36,10 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
         out.textContent = slider.value;
       }
 
-      // initial + live updates
       updateHealth();
       slider.addEventListener("input", updateHealth);
       slider.addEventListener("change", updateHealth);
 
-      // keep number synced after "CLEAR AND START OVER"
       if (form) {
         form.addEventListener("reset", function () {
           setTimeout(updateHealth, 0);
