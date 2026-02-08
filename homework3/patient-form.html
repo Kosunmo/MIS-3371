@@ -199,10 +199,13 @@ Description: Homework 3 patient registration form for Northside Family Medicine 
           </tr>
 
           <tr>
-            <td class="labelCell"><label for="healthScale">Health (1 to 10)</label></td>
+            <td class="label">Health (1 to 10)</td>
             <td colspan="3">
-              <input type="range" id="healthScale" name="healthScale" min="1" max="10" value="5">
-              <span class="hint">1 = Dead, 10 = Not Dead</span>
+              <div class="rangeRow">
+                <input id="health" name="health" type="range" min="1" max="10" value="5" title="Slide to choose 1–10.">
+                <span class="healthNum" id="healthValue">5</span>
+                <span class="hintText">1 = Dead, 10 = Not Dead</span>
+              </div>
             </td>
           </tr>
 
