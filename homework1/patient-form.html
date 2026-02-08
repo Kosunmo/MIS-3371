@@ -2,8 +2,8 @@
 Program name: patient-form.html
 Author: Kai Osunmo
 Date created: 02/07/2026
-Date last edited: 02/07/2026
-Version: 1.0
+Date last edited: 02/08/2026
+Version: 1.1
 Description: Patient registration form for MIS 3371 Homework 1 (client-side only).
 -->
 
@@ -29,13 +29,24 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
 
       const slider = document.getElementById("healthScale");
       const out = document.getElementById("healthValue");
+      const form = document.getElementById("patientForm");
       if (!slider || !out) return;
 
-      out.textContent = slider.value;
-
-      slider.addEventListener("input", function () {
+      function updateHealth() {
         out.textContent = slider.value;
-      });
+      }
+
+      // initial + live updates
+      updateHealth();
+      slider.addEventListener("input", updateHealth);
+      slider.addEventListener("change", updateHealth);
+
+      // keep number synced after "CLEAR AND START OVER"
+      if (form) {
+        form.addEventListener("reset", function () {
+          setTimeout(updateHealth, 0);
+        });
+      }
     });
   </script>
 </head>
@@ -55,7 +66,7 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
     <div id="content">
       <h2>Patient Registration Form</h2>
 
-      <form action="thankyou.html">
+      <form id="patientForm" action="thankyou.html">
         <table class="formTable">
           <tr>
             <th colspan="4">Patient Information</th>
@@ -130,7 +141,7 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
                 <option value="DC">DC</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option>
                 <option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
                 <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option>
-                <option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option>
+                <option value="MD">MD</option><option valuez="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option>
                 <option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
                 <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option>
                 <option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option>
