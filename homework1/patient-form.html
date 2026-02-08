@@ -16,17 +16,28 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
 
   <link rel="stylesheet" href="style.css">
 
-  <script>
-    function showDate() {
-      const today = new Date();
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const el = document.getElementById('today');
-      if (el) el.textContent = today.toLocaleDateString(undefined, options);
-    }
-  </script>
-</head>
+<script>
+  function showDate() {
+    const today = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const el = document.getElementById('today');
+    if (el) el.textContent = today.toLocaleDateString(undefined, options);
+  }
 
-<body onload="showDate()">
+  function hookHealthSlider() {
+    const slider = document.getElementById("healthScale");
+    const out = document.getElementById("healthValue");
+    if (!slider || !out) return;
+
+    out.textContent = slider.value;
+
+    slider.addEventListener("input", function () {
+      out.textContent = slider.value;
+    });
+  }
+</script>
+
+<body onload="showDate(); hookHealthSlider();">
 
   <div id="page">
 
