@@ -222,3 +222,77 @@ textarea {
 .socialLinks a:hover {
   text-decoration: underline;
 }
+
+.reviewCard {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #cfd6dd;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.reviewCard h3 {
+  margin: 0 0 6px 0;
+}
+
+.reviewSub {
+  margin: 0 0 12px 0;
+  color: #4b5563;
+}
+
+.reviewOk {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef7ee;
+  border: 1px solid #cfe7cf;
+  margin-bottom: 12px;
+}
+
+.reviewNotice {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff4e6;
+  border: 1px solid #ffd3a3;
+  margin-bottom: 12px;
+}
+
+.reviewNotice ul {
+  margin: 6px 0 0 18px;
+}
+
+.reviewSection {
+  margin-top: 14px;
+}
+
+.reviewTitle {
+  font-weight: 700;
+  padding: 8px 10px;
+  background: #f3f6f9;
+  border: 1px solid #e3e8ee;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.reviewTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reviewTable td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eef2f6;
+  vertical-align: top;
+}
+
+.reviewTable td:first-child {
+  width: 220px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.reviewAddress {
+  padding: 10px 8px;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  background: #fbfdff;
+}
