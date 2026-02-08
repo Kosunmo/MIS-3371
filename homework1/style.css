@@ -181,3 +181,14 @@ textarea {
 .socialLinks a:hover {
   text-decoration: underline;
 }
+
+.rangeRow input[type="range"]{
+  width: 280px;
+  cursor: pointer;
+}
+
+.rangeRow{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
