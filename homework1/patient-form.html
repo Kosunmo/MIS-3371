@@ -202,8 +202,12 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
           <tr>
             <td class="labelCell"><label for="healthScale">Health (1 to 10)</label></td>
             <td colspan="3">
-              <input type="range" id="healthScale" name="healthScale" min="1" max="10" value="5">
-              <span class="hint">1 = Dead, 10 = Not Dead</span>
+              <div class="rangeRow">
+                <input type="range" id="healthScale" name="healthScale" min="1" max="10" value="5"
+                       title="Slide to choose a value from 1 to 10.">
+                <span class="rangeValue" id="healthValue">5</span>
+                <span class="hint">1 = Dead, 10 = Not Dead</span>
+              </div>
             </td>
           </tr>
 
