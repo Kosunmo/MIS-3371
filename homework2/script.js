@@ -3,17 +3,19 @@ Program name: script.js
 Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/08/2026
-Version: 2.1
+Version: 2.2
 Description: Homework 2 JS for date display, DOB range, slider live value, reset sync, and REVIEW output.
 */
 
 document.addEventListener("DOMContentLoaded", function () {
   setToday();
   setDobRange();
+  hookDobValidation();
   hookSlider();
   hookReset();
   hookReview();
   hookPasswordMatch();
+  hookUserIdLowercase();
   hookContactButton();
 });
 
@@ -49,6 +51,43 @@ function toISO(d) {
   return yyyy + "-" + mm + "-" + dd;
 }
 
+/* DOB: show message and ensure validity is cleared when fixed */
+function hookDobValidation() {
+  const dob = document.getElementById("dob");
+  const msg = document.getElementById("dobMsg");
+  if (!dob) return;
+
+  function validateDob() {
+    // clear first
+    dob.setCustomValidity("");
+    if (msg) msg.textContent = "";
+
+    if (!dob.value) return;
+
+    const picked = new Date(dob.value + "T00:00:00");
+    const min = new Date(dob.min + "T00:00:00");
+    const max = new Date(dob.max + "T00:00:00");
+
+    if (picked < min) {
+      dob.setCustomValidity("DOB is too old.");
+      if (msg) msg.textContent = "DOB must be within the last 120 years.";
+      return;
+    }
+    if (picked > max) {
+      dob.setCustomValidity("DOB cannot be in the future.");
+      if (msg) msg.textContent = "DOB cannot be in the future.";
+      return;
+    }
+  }
+
+  dob.addEventListener("input", validateDob);
+  dob.addEventListener("change", validateDob);
+  dob.addEventListener("blur", validateDob);
+
+  // run once in case browser autofilled something
+  validateDob();
+}
+
 function hookSlider() {
   const slider = document.getElementById("healthScale");
   const out = document.getElementById("healthValue");
@@ -63,9 +102,10 @@ function hookSlider() {
 
   // live updates while dragging
   slider.addEventListener("input", updateHealth);
-
-  // backup for browsers that only fire change on release
   slider.addEventListener("change", updateHealth);
+
+  // helps on some browsers where input doesn't fire until interaction starts
+  slider.addEventListener("pointerdown", updateHealth);
 }
 
 function hookReset() {
@@ -73,9 +113,9 @@ function hookReset() {
   if (!form) return;
 
   form.addEventListener("reset", function () {
-    // let browser reset first, then sync UI
+    // allow browser to reset first, then sync UI + clear custom validity/messages
     setTimeout(function () {
-      // reset slider label
+      // slider label sync
       const slider = document.getElementById("healthScale");
       const out = document.getElementById("healthValue");
       if (slider && out) out.textContent = slider.value;
@@ -86,9 +126,19 @@ function hookReset() {
         reviewOutput.textContent = "Click REVIEW to display your entered information here.";
       }
 
-      // clear password mismatch message
+      // clear password mismatch state + message
+      const pw1 = document.getElementById("password");
+      const pw2 = document.getElementById("password2");
       const pwMsg = document.getElementById("pwMsg");
+      if (pw1) pw1.setCustomValidity("");
+      if (pw2) pw2.setCustomValidity("");
       if (pwMsg) pwMsg.textContent = "";
+
+      // clear DOB message/custom validity
+      const dob = document.getElementById("dob");
+      const dobMsg = document.getElementById("dobMsg");
+      if (dob) dob.setCustomValidity("");
+      if (dobMsg) dobMsg.textContent = "";
     }, 0);
   });
 }
@@ -97,19 +147,38 @@ function hookPasswordMatch() {
   const pw1 = document.getElementById("password");
   const pw2 = document.getElementById("password2");
   const msg = document.getElementById("pwMsg");
-  if (!pw1 || !pw2 || !msg) return;
+  if (!pw1 || !pw2) return;
 
   function checkMatch() {
-    if (!pw1.value || !pw2.value) {
-      msg.textContent = "";
-      return;
+    // clear first
+    pw2.setCustomValidity("");
+    if (msg) msg.textContent = "";
+
+    if (!pw1.value || !pw2.value) return;
+
+    if (pw1.value !== pw2.value) {
+      pw2.setCustomValidity("Passwords must match.");
+      if (msg) msg.textContent = "Passwords must match.";
     }
-    msg.textContent = (pw1.value === pw2.value) ? "" : "Passwords must match.";
   }
 
   pw1.addEventListener("input", checkMatch);
   pw2.addEventListener("input", checkMatch);
   pw2.addEventListener("blur", checkMatch);
+}
+
+/* UserID: force lowercase live so it matches the assignment note */
+function hookUserIdLowercase() {
+  const userId = document.getElementById("userId");
+  if (!userId) return;
+
+  userId.addEventListener("input", function () {
+    const start = userId.selectionStart;
+    const end = userId.selectionEnd;
+    userId.value = userId.value.toLowerCase();
+    // keep cursor position stable
+    userId.setSelectionRange(start, end);
+  });
 }
 
 function hookReview() {
@@ -119,8 +188,8 @@ function hookReview() {
   if (!btn || !out || !form) return;
 
   btn.addEventListener("click", function () {
-    // force the browser to evaluate built-in HTML validation first
-    if (!form.checkValidity()) {
+    // reportValidity highlights the exact field that is failing
+    if (!form.reportValidity()) {
       out.innerHTML = "<strong>Fix the required fields and formatting first.</strong>";
       return;
     }
