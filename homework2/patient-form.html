@@ -243,8 +243,10 @@ Description: MIS 3371 Homework 2 patient registration form.
           <tr>
             <td class="labelCell"><label for="symptoms">Describe Symptoms</label></td>
             <td colspan="3">
-              <textarea id="symptoms" name="symptoms" rows="3" cols="50" maxlength="250"
-                        title="Optional. Describe symptoms (avoid quotes if possible)."></textarea>
+              <textarea id="symptoms" name="symptoms" rows="3" cols="50"
+                title='Optional. Do not use double quotes (").'
+                placeholder="Describe symptoms here..."></textarea>
+              <span class="errorMsg" id="symptomsMsg"></span>
             </td>
           </tr>
 
