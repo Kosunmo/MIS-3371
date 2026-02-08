@@ -1,1 +1,395 @@
+<!--
+Program name: patient-form.html
+Author: Kai Osunmo
+Date created: 02/07/2026
+Date last edited: 02/07/2026
+Version: 2.0
+Description: Patient registration form for MIS 3371 Homework 2 with review button and validations.
+-->
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Northside Family Medicine - Patient Registration</title>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <div id="page">
+
+    <!-- Banner -->
+    <div id="banner">
+      <img id="logo" src="logo.png" alt="Clinic Logo">
+      <div id="bannerText">
+        <h1>Northside Family Medicine</h1>
+        <p>Today is: <span id="today">Loading...</span></p>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div id="content">
+      <h2>Patient Registration Form</h2>
+
+      <form id="patientForm" action="thankyou.html">
+
+        <table class="formTable">
+
+          <tr><th colspan="4">Patient Information</th></tr>
+
+          <tr>
+            <td class="labelCell">First Name</td>
+            <td>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                maxlength="30"
+                minlength="1"
+                required
+                pattern="^[A-Za-z'\-]{1,30}$"
+                title="1-30 letters only. Apostrophes and dashes allowed."
+              >
+              <span class="hint">Letters, apostrophes, dashes</span>
+            </td>
+
+            <td class="labelCell">Middle Initial</td>
+            <td>
+              <input
+                type="text"
+                id="middleInitial"
+                name="middleInitial"
+                maxlength="1"
+                pattern="^[A-Za-z]?$"
+                title="Optional. One letter only."
+              >
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Last Name</td>
+            <td>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                maxlength="30"
+                minlength="1"
+                required
+                pattern="^[A-Za-z'\-]{1,30}([ ]?[2-5])?$"
+                title="1-30 letters. Apostrophes/dashes allowed. Optional ending number 2-5 (ex: Smith 3)."
+              >
+              <span class="hint">Optional ending number 2-5</span>
+            </td>
+
+            <td class="labelCell">Date of Birth</td>
+            <td>
+              <input
+                type="date"
+                id="dob"
+                name="dob"
+                required
+                title="Must be a real date. Not in the future. Not more than 120 years ago."
+              >
+              <span class="error" id="dobError"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">ID Number (9 digits)</td>
+            <td>
+              <input
+                type="password"
+                id="idNumber"
+                name="idNumber"
+                required
+                minlength="9"
+                maxlength="9"
+                pattern="^[0-9]{9}$"
+                title="Enter a 9-digit ID number (numbers only)."
+              >
+              <span class="hint">Obscured like SSN</span>
+            </td>
+
+            <td class="labelCell">Email</td>
+            <td>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                pattern="^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"
+                title="Enter a valid email like name@domain.tld"
+              >
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Phone (000-000-0000)</td>
+            <td>
+              <input
+                type="text"
+                id="phone"
+                name="phone"
+                required
+                pattern="^[0-9]{3}-[0-9]{3}-[0-9]{4}$"
+                title="Enter phone in format 000-000-0000"
+                placeholder="000-000-0000"
+              >
+            </td>
+
+            <td class="labelCell"></td>
+            <td></td>
+          </tr>
+
+          <tr><th colspan="4">Address</th></tr>
+
+          <tr>
+            <td class="labelCell">Address Line 1</td>
+            <td colspan="3">
+              <input
+                class="wideInput"
+                type="text"
+                id="addr1"
+                name="addr1"
+                required
+                minlength="2"
+                maxlength="30"
+                title="Required. 2 to 30 characters."
+              >
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Address Line 2</td>
+            <td colspan="3">
+              <input
+                class="wideInput"
+                type="text"
+                id="addr2"
+                name="addr2"
+                minlength="2"
+                maxlength="30"
+                title="Optional. If entered, 2 to 30 characters."
+              >
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">City</td>
+            <td>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                required
+                minlength="2"
+                maxlength="30"
+                title="Required. 2 to 30 characters."
+              >
+            </td>
+
+            <td class="labelCell">State</td>
+            <td>
+              <select id="state" name="state" required title="Pick a state. No default.">
+                <option value="">Select a State</option>
+                <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option>
+                <option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option>
+                <option value="DC">DC</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option>
+                <option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
+                <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option>
+                <option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option>
+                <option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
+                <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option>
+                <option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option>
+                <option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="PR">PR</option>
+                <option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option>
+                <option value="TX">TX</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option>
+                <option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+              </select>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Zip Code</td>
+            <td>
+              <input
+                type="text"
+                id="zip"
+                name="zip"
+                required
+                maxlength="10"
+                pattern="^[0-9]{5}(-[0-9]{4})?$"
+                title="Enter 5 digits or ZIP+4 like 77002-1234."
+                placeholder="##### or #####-####"
+              >
+              <span class="hint">Will truncate to 5 digits on review</span>
+            </td>
+
+            <td class="labelCell">Desired User ID</td>
+            <td>
+              <input
+                type="text"
+                id="userId"
+                name="userId"
+                required
+                minlength="5"
+                maxlength="30"
+                pattern="^[A-Za-z][A-Za-z0-9_-]{4,29}$"
+                title="5-30 chars. Must start with a letter. Letters/numbers/_/- only. No spaces."
+              >
+              <span class="hint">Converted to lowercase on review</span>
+            </td>
+          </tr>
+
+          <tr><th colspan="4">Account Security</th></tr>
+
+          <tr>
+            <td class="labelCell">Password</td>
+            <td>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                minlength="8"
+                maxlength="30"
+                pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#%^&*()\\-_=+\\\\/<>.,`~])(?!.*\").{8,30}$"
+                title="8-30 chars. Must include: 1 uppercase, 1 lowercase, 1 number, 1 special. No quotes."
+              >
+            </td>
+
+            <td class="labelCell">Re-enter Password</td>
+            <td>
+              <input
+                type="password"
+                id="password2"
+                name="password2"
+                required
+                minlength="8"
+                maxlength="30"
+                title="Must match Password exactly."
+              >
+              <span class="error" id="pwError"></span>
+            </td>
+          </tr>
+
+          <tr><th colspan="4">Health History</th></tr>
+
+          <tr>
+            <td class="labelCell">Check all that apply</td>
+            <td colspan="3">
+              <div class="choicesGrid" title="Select all conditions that apply.">
+                <label><input type="checkbox" name="history" value="Chicken Pox"> Chicken Pox</label>
+                <label><input type="checkbox" name="history" value="Measles"> Measles</label>
+                <label><input type="checkbox" name="history" value="Covid-19"> Covid-19</label>
+                <label><input type="checkbox" name="history" value="Small Pox"> Small Pox</label>
+                <label><input type="checkbox" name="history" value="Tetanus"> Tetanus</label>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Gender</td>
+            <td colspan="3">
+              <label class="inline"><input type="radio" name="gender" value="Male" required> Male</label>
+              <label class="inline"><input type="radio" name="gender" value="Female"> Female</label>
+              <label class="inline"><input type="radio" name="gender" value="Other"> Other</label>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Vaccinated?</td>
+            <td colspan="3">
+              <label class="inline"><input type="radio" name="vaccinated" value="Yes" required> Yes</label>
+              <label class="inline"><input type="radio" name="vaccinated" value="No"> No</label>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Insurance?</td>
+            <td colspan="3">
+              <label class="inline"><input type="radio" name="insurance" value="Yes" required> Yes</label>
+              <label class="inline"><input type="radio" name="insurance" value="No"> No</label>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Health (1 to 10)</td>
+            <td colspan="3">
+              <input
+                type="range"
+                id="health"
+                name="health"
+                min="1"
+                max="10"
+                value="5"
+                oninput="updateHealthValue()"
+                title="Slide to choose 1 (low) to 10 (high)."
+              >
+              <span class="rangeValue" id="healthValue">5</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Describe Symptoms</td>
+            <td colspan="3">
+              <textarea
+                id="symptoms"
+                name="symptoms"
+                rows="3"
+                cols="50"
+                maxlength="250"
+                pattern="^[^\"\<\>]*$"
+                title="Optional. Avoid quotes and HTML tags."
+                placeholder="Describe symptoms here..."
+              ></textarea>
+            </td>
+          </tr>
+
+          <tr>
+            <td colspan="4" class="buttonsRow">
+              <button type="button" class="btnSecondary" onclick="reviewForm()">REVIEW</button>
+              <button type="reset" class="btnSecondary" onclick="clearReview()">CLEAR AND START OVER</button>
+              <button type="submit" class="btnPrimary">SUBMIT</button>
+            </td>
+          </tr>
+
+        </table>
+
+        <div id="reviewBox">
+          <h3>PLEASE REVIEW THIS INFORMATION</h3>
+          <div id="reviewOutput">Click REVIEW to display your entered information here.</div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer">
+      <div class="footerRow">
+        <div>
+          <strong>Northside Family Medicine</strong><br>
+          PO BOX 18881<br>
+          Sugar Land TX 77496
+        </div>
+
+        <div>
+          <button type="button" class="btnFooter" onclick="alert('Contact us at info@example.com');">Contact Us</button>
+        </div>
+
+        <div class="socialLinks">
+          <a href="https://twitter.com" target="_blank" rel="noopener">Twitter</a>
+          <a href="https://facebook.com" target="_blank" rel="noopener">Facebook</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
+
+<!-- End of document -->
