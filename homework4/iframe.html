@@ -4,7 +4,7 @@ Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/07/2026
 Version: 1.0
-Description: iFrame content for Homework 4.
+Description: Homework 4 iframe content (clickable help links).
 -->
 
 <!DOCTYPE html>
@@ -12,22 +12,22 @@ Description: iFrame content for Homework 4.
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Northside Family Medicine Info</title>
+  <title>Resources</title>
   <style>
-    body{ font-family: Arial, Helvetica, sans-serif; margin: 12px; color:#1a1a1a; }
-    h3{ margin: 0 0 8px 0; color:#1f2a44; }
-    p{ margin: 6px 0; }
-    a{ color:#1f2a44; }
+    body{ margin:0; font-family: Arial, Helvetica, sans-serif; background:#ffffff; }
+    .wrap{ padding:12px 14px; }
+    h3{ margin:0 0 8px 0; font-size:16px; color:#1f2a44; }
+    a{ display:block; margin:6px 0; color:#1f2a44; }
+    p{ margin:8px 0 0 0; font-size:13px; color:#555; }
   </style>
 </head>
 <body>
-  <h3>Clinic Links</h3>
-  <p>Helpful references (clickable):</p>
-  <ul>
-    <li><a href="https://www.w3schools.com/js/js_api_fetch.asp" target="_blank" rel="noopener">Fetch API Reference</a></li>
-    <li><a href="https://www.w3schools.com/html/html_iframe.asp" target="_blank" rel="noopener">HTML iFrame Reference</a></li>
-    <li><a href="https://www.w3schools.com/js/js_cookies.asp" target="_blank" rel="noopener">JavaScript Cookies Reference</a></li>
-    <li><a href="https://www.w3schools.com/jsref/prop_win_localstorage.asp" target="_blank" rel="noopener">Local Storage Reference</a></li>
-  </ul>
+  <div class="wrap">
+    <h3>Helpful Links</h3>
+    <a href="https://www.w3schools.com/js/js_cookies.asp" target="_blank" rel="noopener">Cookies reference</a>
+    <a href="https://www.w3schools.com/jsref/prop_win_localstorage.asp" target="_blank" rel="noopener">localStorage reference</a>
+    <a href="https://www.w3schools.com/js/js_api_fetch.asp" target="_blank" rel="noopener">Fetch API reference</a>
+    <p>These open in a new tab. This iframe itself is part of the HW4 requirement.</p>
+  </div>
 </body>
 </html>
