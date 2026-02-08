@@ -1,1 +1,287 @@
+<!--
+Program name: patient-form.html
+Author: Kai Osunmo
+Date created: 02/07/2026
+Date last edited: 02/07/2026
+Version: 9.0
+Description: Homework 3 patient registration form for Northside Family Medicine with on-the-fly JavaScript validation and a Validate button that enables Submit.
+-->
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Northside Family Medicine | Homework 3</title>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <div id="page">
+
+    <div id="banner">
+      <img src="logo.png" alt="Clinic Logo" id="logo">
+      <div>
+        <h1>Northside Family Medicine</h1>
+        <p>Today is: <span id="today">Loading...</span></p>
+      </div>
+    </div>
+
+    <h2 class="pageTitle">Patient Registration Form</h2>
+
+    <div class="card">
+      <form id="patientForm" action="thankyou.html">
+        <table class="formTable">
+          <tr><th colspan="4" class="sectionHead">Patient Information</th></tr>
+
+          <tr>
+            <td class="label">First Name</td>
+            <td>
+              <input id="firstName" name="firstName" type="text" required minlength="1" maxlength="30"
+                title="1–30 characters. Letters, apostrophes, and dashes only."
+                pattern="[A-Za-z'\-]{1,30}">
+              <span class="msg" id="firstNameMsg"></span>
+            </td>
+
+            <td class="label">Middle Initial</td>
+            <td>
+              <input id="middleInitial" name="middleInitial" type="text" maxlength="1"
+                title="Optional. 1 letter only."
+                pattern="[A-Za-z]?">
+              <span class="msg" id="middleInitialMsg"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Last Name</td>
+            <td>
+              <input id="lastName" name="lastName" type="text" required minlength="1" maxlength="30"
+                title="1–30 characters. Letters, apostrophes, dashes, and optional 2–5 digits (e.g., Smith3)."
+                pattern="[A-Za-z'\-]{1,28}[0-9]{0,5}">
+              <span class="msg" id="lastNameMsg"></span>
+            </td>
+
+            <td class="label">Date of Birth</td>
+            <td>
+              <input id="dob" name="dob" type="date" required
+                title="Must not be in the future and not more than 120 years ago.">
+              <span class="msg" id="dobMsg"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">ID Number (9 digits)</td>
+            <td>
+              <!-- Allowed alternative: ID field obscured like password -->
+              <input id="idNumber" name="idNumber" type="password" required maxlength="9"
+                title="Exactly 9 digits. Numbers only."
+                inputmode="numeric" pattern="[0-9]{9}">
+              <span class="msg" id="idNumberMsg"></span>
+            </td>
+
+            <td class="label">Email</td>
+            <td>
+              <input id="email" name="email" type="email" required maxlength="60"
+                title="Format: name@domain.tld. Will be converted to lowercase."
+                pattern="^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$">
+              <span class="msg" id="emailMsg"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Zip Code</td>
+            <td>
+              <!-- HW3 says 5 digits only -->
+              <input id="zip" name="zip" type="text" required maxlength="5"
+                title="5 digits only."
+                inputmode="numeric" pattern="^[0-9]{5}$">
+              <span class="msg" id="zipMsg"></span>
+            </td>
+
+            <td class="label">Phone (optional)</td>
+            <td>
+              <input id="phone" name="phone" type="text" maxlength="12"
+                title="Optional. Format: 000-000-0000"
+                pattern="^([0-9]{3}\-[0-9]{3}\-[0-9]{4})?$"
+                placeholder="000-000-0000">
+              <span class="msg" id="phoneMsg"></span>
+            </td>
+          </tr>
+
+          <tr><th colspan="4" class="sectionHead">Address</th></tr>
+
+          <tr>
+            <td class="label">Address Line 1</td>
+            <td colspan="3">
+              <input id="addr1" name="addr1" type="text" required minlength="2" maxlength="30"
+                title="Required. 2–30 characters.">
+              <span class="msg" id="addr1Msg"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Address Line 2</td>
+            <td colspan="3">
+              <input id="addr2" name="addr2" type="text" minlength="2" maxlength="30"
+                title="Optional. If entered, must be 2–30 characters.">
+              <span class="msg" id="addr2Msg"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">City</td>
+            <td>
+              <input id="city" name="city" type="text" required minlength="2" maxlength="30"
+                title="Required. 2–30 characters.">
+              <span class="msg" id="cityMsg"></span>
+            </td>
+
+            <td class="label">State</td>
+            <td>
+              <select id="state" name="state" required title="Select your state.">
+                <option value="">Select a State</option>
+                <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option>
+                <option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option>
+                <option value="DC">DC</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option>
+                <option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
+                <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option>
+                <option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option>
+                <option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
+                <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option>
+                <option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option>
+                <option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="PR">PR</option>
+                <option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option>
+                <option value="TX">TX</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option>
+                <option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+              </select>
+              <span class="msg" id="stateMsg"></span>
+            </td>
+          </tr>
+
+          <tr><th colspan="4" class="sectionHead">Choices</th></tr>
+
+          <tr>
+            <td class="label">Check all that apply</td>
+            <td colspan="3">
+              <label><input type="checkbox" name="history" value="Chicken Pox"> Chicken Pox</label>
+              <label><input type="checkbox" name="history" value="Measles"> Measles</label>
+              <label><input type="checkbox" name="history" value="Covid-19"> Covid-19</label>
+              <label><input type="checkbox" name="history" value="Tetanus"> Tetanus</label>
+              <label><input type="checkbox" name="history" value="Small Pox"> Small Pox</label>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Gender</td>
+            <td colspan="3">
+              <label><input type="radio" name="gender" value="Male"> Male</label>
+              <label><input type="radio" name="gender" value="Female"> Female</label>
+              <label><input type="radio" name="gender" value="Other"> Other</label>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Vaccinated?</td>
+            <td colspan="3">
+              <label><input type="radio" name="vaccinated" value="Yes"> Yes</label>
+              <label><input type="radio" name="vaccinated" value="No"> No</label>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Insurance?</td>
+            <td colspan="3">
+              <label><input type="radio" name="insurance" value="Yes"> Yes</label>
+              <label><input type="radio" name="insurance" value="No"> No</label>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Health (1 to 10)</td>
+            <td colspan="3">
+              <input id="health" name="health" type="range" min="1" max="10" value="5" title="Slide to choose 1–10.">
+              <span class="healthNum" id="healthValue">5</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Describe Symptoms</td>
+            <td colspan="3">
+              <textarea id="symptoms" name="symptoms" rows="3" cols="50"
+                title="Optional. Avoid double quotes."
+                pattern='^[^"]*$'
+                placeholder="Describe symptoms here..."></textarea>
+              <span class="msg" id="symptomsMsg"></span>
+            </td>
+          </tr>
+
+          <tr><th colspan="4" class="sectionHead">Account Security</th></tr>
+
+          <tr>
+            <td class="label">Desired User ID</td>
+            <td>
+              <input id="userId" name="userId" type="text" required minlength="5" maxlength="20"
+                title="5–20 chars. Must start with a letter. Only letters, numbers, dash, underscore. No spaces."
+                pattern="^[A-Za-z][A-Za-z0-9_-]{4,19}$">
+              <span class="msg" id="userIdMsg"></span>
+            </td>
+
+            <td class="label">Password</td>
+            <td>
+              <input id="password" name="password" type="password" required minlength="8" maxlength="30"
+                title="8–30 chars. At least 1 uppercase, 1 lowercase, 1 number. No quotes."
+                pattern='^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^"]{8,30}$'>
+              <span class="msg" id="passwordMsg"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label">Re-enter Password</td>
+            <td>
+              <input id="password2" name="password2" type="password" required minlength="8" maxlength="30"
+                title="Must match the password above.">
+              <span class="msg" id="password2Msg"></span>
+            </td>
+
+            <td colspan="2"></td>
+          </tr>
+        </table>
+
+        <div class="buttonRow">
+          <button type="button" class="btn secondary" id="validateBtn">VALIDATE</button>
+          <button type="reset" class="btn light" id="resetBtn">CLEAR AND START OVER</button>
+
+          <!-- Hidden until validation passes -->
+          <button type="submit" class="btn primary" id="submitBtn" style="display:none;">SUBMIT</button>
+        </div>
+
+        <div class="statusBox" id="statusBox">
+          Fill out the form. Errors will show next to fields. Click VALIDATE to enable SUBMIT.
+        </div>
+      </form>
+    </div>
+
+    <div id="footer">
+      <div class="footerLeft">
+        <strong>Northside Family Medicine</strong><br>
+        PO BOX 18881<br>
+        Sugar Land TX 77496
+      </div>
+
+      <div class="footerMid">
+        <button type="button" class="btn gold" onclick="alert('Contact us at info@example.com');">Contact Us</button>
+      </div>
+
+      <div class="footerRight">
+        <a href="https://twitter.com" target="_blank" rel="noopener">Twitter</a>
+        <a href="https://facebook.com" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
+
+<!-- End of document -->
