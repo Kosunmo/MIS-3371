@@ -7,8 +7,81 @@ Version: 2.0
 Description: Homework 2 JS for dynamic date, DOB range, slider value, review output, and password match.
 */
 
-function reviewForm() {
+document.addEventListener("DOMContentLoaded", function () {
+  setToday();
+  setDobRange();
+  updateHealthValue();
+});
 
+function setToday() {
+  const el = document.getElementById("today");
+  if (!el) return;
+  const now = new Date();
+  const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+  el.textContent = now.toLocaleDateString(undefined, options);
+}
+
+function setDobRange() {
+  const dob = document.getElementById("dob");
+  if (!dob) return;
+
+  const now = new Date();
+  const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
+
+  dob.max = toISO(max);
+  dob.min = toISO(min);
+}
+
+function toISO(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return yyyy + "-" + mm + "-" + dd;
+}
+
+function updateHealthValue() {
+  const slider = document.getElementById("health");
+  const out = document.getElementById("healthValue");
+  if (slider && out) out.textContent = slider.value;
+}
+
+function clearReview() {
+  const out = document.getElementById("reviewOutput");
+  if (out) out.textContent = "Click REVIEW to display your entered information here.";
+  setMsg("pwMsg", "");
+  setMsg("dobMsg", "");
+}
+
+function setMsg(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function getRadio(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : "";
+}
+
+function getChecks(name) {
+  const els = document.querySelectorAll('input[name="' + name + '"]:checked');
+  const vals = [];
+  for (let i = 0; i < els.length; i++) vals.push(els[i].value);
+  return vals;
+}
+
+function escapeHtml(s) {
+  if (!s) return "";
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function truncateZip(zip) {
+  if (!zip) return "";
+  return zip.substring(0, 5);
+}
+
+function reviewForm() {
+  
   function displayOrNone(value) {
     const v = (value || "").toString().trim();
     return v ? v : "None selected";
@@ -23,7 +96,7 @@ function reviewForm() {
   }
 
   function formatDate(iso) {
-    
+
     return displayOrNone(iso);
   }
 
@@ -70,7 +143,6 @@ function reviewForm() {
   const pw1 = document.getElementById("password").value;
   const pw2 = document.getElementById("password2").value;
 
- 
   const pwMsg = document.getElementById("pwMsg");
   if (pw1 || pw2) {
     if (pw1 !== pw2) setMsg("pwMsg", "Passwords do not match. Please re-enter them.");
@@ -78,7 +150,6 @@ function reviewForm() {
   } else {
     setMsg("pwMsg", "");
   }
-
 
   const dobNote = dobFriendlyNote(dob);
   setMsg("dobMsg", dobNote);
@@ -89,7 +160,6 @@ function reviewForm() {
   const history = getChecks("history");
   const health = document.getElementById("health").value;
   const symptoms = document.getElementById("symptoms").value.trim();
-
 
   const nameParts = [firstName, middleInitial, lastName].filter(Boolean);
   const fullName = nameParts.join(" ");
@@ -107,11 +177,9 @@ function reviewForm() {
 
   const historyText = history.length ? history.join(", ") : "None selected";
 
-
   const notes = [];
   if ((pw1 || pw2) && pw1 !== pw2) notes.push("Please fix: passwords do not match.");
   if (dobNote) notes.push(dobNote);
-
 
   const output =
     "<div class='reviewCard'>" +
