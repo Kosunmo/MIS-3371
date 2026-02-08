@@ -16,39 +16,38 @@ Description: Patient registration form for MIS 3371 Homework 1 (client-side only
 
   <link rel="stylesheet" href="style.css">
 
-  <script>
-    function showDate() {
-      const today = new Date();
-      const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
-      const el = document.getElementById("today");
-      if (el) el.textContent = today.toLocaleDateString(undefined, options);
+<script>
+  function showDate() {
+    const today = new Date();
+    const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+    const el = document.getElementById("today");
+    if (el) el.textContent = today.toLocaleDateString(undefined, options);
+  }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    showDate();
+
+    const form = document.getElementById("patientForm");
+    const slider = document.getElementById("healthScale");
+    const out = document.getElementById("healthValue");
+    if (!form || !slider || !out) return;
+
+    function updateHealth() {
+      out.textContent = slider.value;
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-      showDate();
+    // initial + live updates
+    updateHealth();
+    slider.addEventListener("input", updateHealth);
+    slider.addEventListener("change", updateHealth);
 
-      const slider = document.getElementById("healthScale");
-      const out = document.getElementById("healthValue");
-      const form = document.getElementById("patientForm");
-      if (!slider || !out) return;
-
-      function updateHealth() {
-        out.textContent = slider.value;
-      }
-
-      // initial + live updates
-      updateHealth();
-      slider.addEventListener("input", updateHealth);
-      slider.addEventListener("change", updateHealth);
-
-      // keep number synced after "CLEAR AND START OVER"
-      if (form) {
-        form.addEventListener("reset", function () {
-          setTimeout(updateHealth, 0);
-        });
-      }
+    // after CLEAR AND START OVER (form reset)
+    form.addEventListener("reset", function () {
+      // wait for the browser to apply the reset, then sync the number
+      setTimeout(updateHealth, 0);
     });
-  </script>
+  });
+</script>
 </head>
 
 <body>
