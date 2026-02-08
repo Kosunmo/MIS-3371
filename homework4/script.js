@@ -4,38 +4,44 @@ Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/07/2026
 Version: 4.0
-Description: Homework 4 JS: date, DOB range, slider value, fetch state list, cookies, localStorage.
+Description: Homework 4 JS for on-the-fly validation, Fetch API states list, iFrame support,
+cookies (remember first name), and localStorage (non-secure fields). Validate button enables Submit.
 */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
   setToday();
   setDobRange();
-  setHealthValue();
-  wireHealthSlider();
+  hookLiveValidation();
+  hookButtons();
+  hookSlider();
 
-  applyRememberMeDefaults();
-  loadCookieWelcome();
-  wireNotYou();
-  wireRememberMe();
-
-  fetchStatesIntoSelect();
-
-  wirePasswordMatch();
-  wireLocalStorageSaving();
-  wireReset();
+  // HW4 additions
+  fetchStatesOptions();        // Fetch API
+  initRemembering();           // cookie + localStorage
 });
 
-function setToday(){
+/* -----------------------------
+   Banner date
+----------------------------- */
+function setToday() {
   const el = document.getElementById("today");
-  if(!el) return;
+  if (!el) return;
+
   const now = new Date();
-  const options = { weekday:"long", year:"numeric", month:"long", day:"numeric" };
-  el.textContent = now.toLocaleDateString(undefined, options);
+  el.textContent = now.toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
-function setDobRange(){
+/* -----------------------------
+   DOB range
+----------------------------- */
+function setDobRange() {
   const dob = document.getElementById("dob");
-  if(!dob) return;
+  if (!dob) return;
 
   const now = new Date();
   const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -45,317 +51,505 @@ function setDobRange(){
   dob.min = toISO(min);
 }
 
-function toISO(d){
+function toISO(d) {
   const yyyy = d.getFullYear();
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  const dd = String(d.getDate()).padStart(2,"0");
-  return `${yyyy}-${mm}-${dd}`;
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return yyyy + "-" + mm + "-" + dd;
 }
 
-function setHealthValue(){
-  const slider = document.getElementById("healthScale");
+/* -----------------------------
+   Slider
+----------------------------- */
+function hookSlider() {
+  const slider = document.getElementById("health");
+  if (!slider) return;
+  slider.addEventListener("input", updateHealthValue);
+  updateHealthValue();
+}
+
+function updateHealthValue() {
+  const slider = document.getElementById("health");
   const out = document.getElementById("healthValue");
-  if(slider && out) out.textContent = slider.value;
+  if (slider && out) out.textContent = slider.value;
 }
 
-function wireHealthSlider(){
-  const slider = document.getElementById("healthScale");
-  if(!slider) return;
-  slider.addEventListener("input", () => {
-    setHealthValue();
-    saveFieldToLocal("healthScale", slider.value);
-  });
-}
+/* -----------------------------
+   Fetch API: load states from separate file
+----------------------------- */
+async function fetchStatesOptions() {
+  const stateSel = document.getElementById("state");
+  if (!stateSel) return;
 
-/* ===== Fetch API: State list ===== */
-async function fetchStatesIntoSelect(){
-  const sel = document.getElementById("state");
-  if(!sel) return;
+  try {
+    const resp = await fetch("states-options.html", { cache: "no-store" });
+    if (!resp.ok) throw new Error("Fetch failed");
 
-  try{
-    const res = await fetch("states-options.html", { cache: "no-store" });
-    if(!res.ok) throw new Error("Fetch failed");
-    const html = await res.text();
+    const optionsHtml = await resp.text();
 
-    sel.innerHTML = '<option value="">Select a State</option>' + html;
-
-    const saved = getLocal("state");
-    if(saved) sel.value = saved;
-
-  }catch(e){
-    sel.innerHTML = '<option value="">Select a State</option>';
+    // Always keep a null option first
+    stateSel.innerHTML = '<option value="">Select a State</option>' + optionsHtml;
+  } catch (err) {
+    // Fallback: still allow the form to work
+    stateSel.innerHTML = '<option value="">Select a State</option>';
+    setStatus("Could not load states list. (Fetch API error) You can still fill out other fields.");
   }
 }
 
-/* ===== Cookies: Remember first name ===== */
-function setCookie(name, value, hours){
-  const d = new Date();
-  d.setTime(d.getTime() + (hours * 60 * 60 * 1000));
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${d.toUTCString()}; path=/`;
+/* -----------------------------
+   Live validation hooks
+----------------------------- */
+function hookLiveValidation() {
+  const ids = [
+    "firstName","middleInitial","lastName","dob","idNumber","email","zip","phone",
+    "addr1","addr2","city","state","symptoms","userId","password","password2"
+  ];
+
+  ids.forEach(function (id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("input", function () {
+      validateField(id);
+    });
+
+    el.addEventListener("blur", function () {
+      validateField(id);
+      maybeSaveField(id);  // HW4 localStorage save on leave field
+      maybeRememberFirstName(); // HW4 cookie save
+    });
+  });
+
+  // Normalize email/userId to lowercase on blur
+  const email = document.getElementById("email");
+  if (email) email.addEventListener("blur", function () {
+    email.value = email.value.trim().toLowerCase();
+    validateField("email");
+    maybeSaveField("email");
+  });
+
+  const userId = document.getElementById("userId");
+  if (userId) userId.addEventListener("blur", function () {
+    userId.value = userId.value.trim().toLowerCase();
+    validateField("userId");
+    maybeSaveField("userId");
+  });
+
+  // Force digits only for ID number (max 9)
+  const idNumber = document.getElementById("idNumber");
+  if (idNumber) idNumber.addEventListener("input", function () {
+    idNumber.value = idNumber.value.replace(/\D/g, "").slice(0, 9);
+  });
+
+  // Zip digits only (max 5)
+  const zip = document.getElementById("zip");
+  if (zip) zip.addEventListener("input", function () {
+    zip.value = zip.value.replace(/\D/g, "").slice(0, 5);
+  });
+
+  // Save radios/checkboxes when changed (HW4 localStorage)
+  const form = document.getElementById("patientForm");
+  if (form) {
+    form.addEventListener("change", function (e) {
+      const t = e.target;
+      if (!t) return;
+
+      if (t.type === "checkbox" || t.type === "radio" || t.tagName === "SELECT") {
+        maybeSaveAllNonSecure();
+      }
+
+      if (t.id === "rememberMe") handleRememberMeToggle();
+      if (t.id === "newUserChk") handleNewUserToggle();
+    });
+  }
 }
 
-function getCookie(name){
+/* -----------------------------
+   Buttons
+----------------------------- */
+function hookButtons() {
+  const validateBtn = document.getElementById("validateBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const submitBtn = document.getElementById("submitBtn");
+  const form = document.getElementById("patientForm");
+
+  if (validateBtn) validateBtn.addEventListener("click", function () {
+    const ok = validateAll();
+    if (ok) {
+      setStatus("All set. Submit is enabled.");
+      if (submitBtn) submitBtn.style.display = "inline-block";
+
+      // HW4: save data if remember is on
+      maybeRememberFirstName();
+      maybeSaveAllNonSecure();
+    } else {
+      setStatus("Fix the items shown in red, then click VALIDATE again.");
+      if (submitBtn) submitBtn.style.display = "none";
+    }
+  });
+
+  if (resetBtn) resetBtn.addEventListener("click", function () {
+    clearMessages();
+    setStatus("Form cleared. Fill it out and click VALIDATE.");
+    if (submitBtn) submitBtn.style.display = "none";
+    updateHealthValue();
+
+    // HW4: if remember is off, clear storage/cookie
+    handleRememberMeToggle();
+  });
+
+  // Safety: block submit if not valid
+  if (form) form.addEventListener("submit", function (e) {
+    const ok = validateAll();
+    if (!ok) {
+      e.preventDefault();
+      setStatus("Not submitted. Fix the items shown, then click VALIDATE.");
+      if (submitBtn) submitBtn.style.display = "none";
+      return;
+    }
+
+    // HW4: final save before leaving page
+    maybeRememberFirstName();
+    maybeSaveAllNonSecure();
+  });
+}
+
+/* -----------------------------
+   Status + messages
+----------------------------- */
+function setStatus(text) {
+  const el = document.getElementById("statusBox");
+  if (el) el.textContent = text;
+}
+
+function setMsg(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function clearMessages() {
+  const msgs = document.querySelectorAll(".errorMsg");
+  for (let i = 0; i < msgs.length; i++) msgs[i].textContent = "";
+}
+
+/* -----------------------------
+   Validate all + field-level
+----------------------------- */
+function validateAll() {
+  let ok = true;
+  const ids = [
+    "firstName","middleInitial","lastName","dob","idNumber","email","zip","phone",
+    "addr1","addr2","city","state","symptoms","userId","password","password2"
+  ];
+
+  for (let i = 0; i < ids.length; i++) {
+    if (!validateField(ids[i])) ok = false;
+  }
+
+  // Cross-field checks
+  const userId = (document.getElementById("userId").value || "").trim().toLowerCase();
+  const pw1 = document.getElementById("password").value || "";
+  const pw2 = document.getElementById("password2").value || "";
+
+  if (userId && pw1 && pw1.toLowerCase() === userId) {
+    ok = false;
+    setMsg("passwordMsg", "Password cannot be the same as your User ID.");
+  }
+
+  if ((pw1 || pw2) && pw1 !== pw2) {
+    ok = false;
+    setMsg("password2Msg", "Passwords must match.");
+  }
+
+  return ok;
+}
+
+function validateField(id) {
+  const el = document.getElementById(id);
+  if (!el) return true;
+
+  const msgId = id + "Msg";
+  let msg = "";
+
+  // Optional fields
+  const optional = (id === "middleInitial" || id === "addr2" || id === "phone" || id === "symptoms");
+  const value = (el.value || "").trim();
+  if (optional && value === "") {
+    setMsg(msgId, "");
+    return true;
+  }
+
+  if (!el.checkValidity()) {
+    if (el.validity.valueMissing) msg = "Required.";
+    else if (el.validity.patternMismatch) msg = "Format is not correct.";
+    else if (el.validity.tooShort) msg = "Too short.";
+    else if (el.validity.tooLong) msg = "Too long.";
+    else if (el.validity.typeMismatch) msg = "Invalid value.";
+    else msg = "Fix this field.";
+  }
+
+  // DOB range message
+  if (!msg && id === "dob" && value) {
+    const dobDate = new Date(value + "T00:00:00");
+    const now = new Date();
+    const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
+    const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (dobDate < min) msg = "DOB looks too far in the past.";
+    if (dobDate > max) msg = "DOB cannot be in the future.";
+  }
+
+  // Block double quotes in text area
+  if (!msg && id === "symptoms" && value.includes('"')) msg = 'Remove double quotes (").';
+
+  setMsg(msgId, msg);
+  return msg === "";
+}
+
+/* -----------------------------
+   HW4 Cookies + Local Storage
+----------------------------- */
+
+// Cookie helpers
+function setCookie(name, value, hours) {
+  const d = new Date();
+  d.setTime(d.getTime() + (hours * 60 * 60 * 1000));
+  const expires = "expires=" + d.toUTCString();
+  document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+}
+
+function getCookie(name) {
   const target = name + "=";
   const parts = document.cookie.split(";");
-  for(let i=0;i<parts.length;i++){
-    const c = parts[i].trim();
-    if(c.indexOf(target) === 0) return decodeURIComponent(c.substring(target.length));
+  for (let i = 0; i < parts.length; i++) {
+    let c = parts[i].trim();
+    if (c.indexOf(target) === 0) return decodeURIComponent(c.substring(target.length, c.length));
   }
   return "";
 }
 
-function deleteCookie(name){
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+function deleteCookie(name) {
+  document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 }
 
-function applyRememberMeDefaults(){
+const STORAGE_KEY = "hw4_patient_nonsecure";
+const COOKIE_NAME = "hw4_firstName";
+
+function initRemembering() {
   const remember = document.getElementById("rememberMe");
-  if(!remember) return;
-  if(remember.checked !== true) remember.checked = true;
-}
+  const firstNameCookie = getCookie(COOKIE_NAME);
 
-function loadCookieWelcome(){
-  const first = getCookie("nf_first");
-  const welcome = document.getElementById("welcomeText");
-  const notYouRow = document.getElementById("notYouRow");
-  const inlineName = document.getElementById("cookieNameInline");
+  // If cookie exists, show returning message
+  if (firstNameCookie) {
+    showReturningBox(firstNameCookie);
+    // Prefill first name
+    const fn = document.getElementById("firstName");
+    if (fn && !fn.value) fn.value = firstNameCookie;
 
-  if(first){
-    if(welcome) welcome.textContent = `Welcome back, ${first}`;
-    if(notYouRow) notYouRow.style.display = "inline-block";
-    if(inlineName) inlineName.textContent = first;
+    setWelcomeLine(true, firstNameCookie);
 
-    const firstBox = document.getElementById("firstName");
-    if(firstBox) firstBox.value = first;
-
-    loadLocalStorageIntoForm();
-  }else{
-    if(welcome) welcome.textContent = "Hello New User";
-    if(notYouRow) notYouRow.style.display = "none";
-  }
-}
-
-function wireNotYou(){
-  const chk = document.getElementById("notYouChk");
-  if(!chk) return;
-
-  chk.addEventListener("change", () => {
-    if(chk.checked){
-      startNewUser();
-      chk.checked = false;
+    // Load localStorage values if present
+    if (!remember || remember.checked) {
+      loadNonSecureFromStorage();
     }
-  });
+  } else {
+    setWelcomeLine(false, "");
+  }
+
+  // If rememberMe unchecked at load, do not keep data
+  handleRememberMeToggle();
 }
 
-function wireRememberMe(){
-  const remember = document.getElementById("rememberMe");
-  if(!remember) return;
+function setWelcomeLine(isReturning, name) {
+  const line = document.getElementById("welcomeLine");
+  if (!line) return;
 
-  remember.addEventListener("change", () => {
-    if(!remember.checked){
-      deleteCookie("nf_first");
-      clearAllLocal();
-      loadCookieWelcome();
-    }else{
-      const firstBox = document.getElementById("firstName");
-      const first = firstBox ? firstBox.value.trim() : "";
-      if(first) setCookie("nf_first", first, 48);
-      loadCookieWelcome();
+  if (isReturning && name) {
+    line.innerHTML = 'Welcome back, <strong>' + escapeHtml(name) + '</strong>. Today is: <span id="today">Loading...</span>';
+    setToday(); // refresh today span after replacing HTML
+  } else {
+    line.innerHTML = 'Hello new user. Today is: <span id="today">Loading...</span>';
+    setToday();
+  }
+}
+
+function showReturningBox(name) {
+  const box = document.getElementById("returningBox");
+  const txt = document.getElementById("returningText");
+  if (!box || !txt) return;
+
+  box.style.display = "block";
+  txt.textContent = "Cookie found for first name: " + name + ". If this is not you, check the box below.";
+}
+
+function handleNewUserToggle() {
+  const chk = document.getElementById("newUserChk");
+  if (!chk) return;
+
+  if (chk.checked) {
+    // Clear cookie + local storage and reset form
+    deleteCookie(COOKIE_NAME);
+    localStorage.removeItem(STORAGE_KEY);
+
+    const form = document.getElementById("patientForm");
+    if (form) form.reset();
+
+    clearMessages();
+    setStatus("Started as NEW USER. Saved cookie/storage cleared. Fill out the form and click VALIDATE.");
+
+    // Hide submit until revalidated
+    const submitBtn = document.getElementById("submitBtn");
+    if (submitBtn) submitBtn.style.display = "none";
+
+    // Update welcome line
+    setWelcomeLine(false, "");
+
+    // Hide returning box after clearing
+    const box = document.getElementById("returningBox");
+    if (box) box.style.display = "none";
+
+    updateHealthValue();
+  }
+}
+
+function handleRememberMeToggle() {
+  const remember = document.getElementById("rememberMe");
+  if (!remember) return;
+
+  if (!remember.checked) {
+    // Requirement: if not checked, expire cookie and delete local data
+    deleteCookie(COOKIE_NAME);
+    localStorage.removeItem(STORAGE_KEY);
+
+    const box = document.getElementById("returningBox");
+    if (box) box.style.display = "none";
+
+    // Also hide submit until revalidated
+    const submitBtn = document.getElementById("submitBtn");
+    if (submitBtn) submitBtn.style.display = "none";
+  } else {
+    // If checked, save immediately if first name exists
+    maybeRememberFirstName();
+    maybeSaveAllNonSecure();
+  }
+}
+
+function maybeRememberFirstName() {
+  const remember = document.getElementById("rememberMe");
+  if (!remember || !remember.checked) return;
+
+  const fn = document.getElementById("firstName");
+  if (!fn) return;
+
+  const name = (fn.value || "").trim();
+  if (name) {
+    // Requirement suggests <= 48 hours
+    setCookie(COOKIE_NAME, name, 48);
+  }
+}
+
+function maybeSaveField(id) {
+  const remember = document.getElementById("rememberMe");
+  if (!remember || !remember.checked) return;
+
+  // Do NOT store secure fields
+  if (id === "idNumber" || id === "password" || id === "password2") return;
+
+  maybeSaveAllNonSecure();
+}
+
+function maybeSaveAllNonSecure() {
+  const remember = document.getElementById("rememberMe");
+  if (!remember || !remember.checked) return;
+
+  const data = {};
+
+  // text/select/textarea
+  const ids = [
+    "firstName","middleInitial","lastName","dob","email","zip","phone",
+    "addr1","addr2","city","state","symptoms","userId","health"
+  ];
+
+  for (let i = 0; i < ids.length; i++) {
+    const el = document.getElementById(ids[i]);
+    if (el) data[ids[i]] = el.value;
+  }
+
+  // checkboxes (history)
+  const history = document.querySelectorAll('input[name="history"]');
+  data.history = [];
+  for (let i = 0; i < history.length; i++) {
+    if (history[i].checked) data.history.push(history[i].value);
+  }
+
+  // radios
+  data.gender = getRadioValue("gender");
+  data.vaccinated = getRadioValue("vaccinated");
+  data.insurance = getRadioValue("insurance");
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadNonSecureFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    return;
+  }
+
+  // basic fields
+  const ids = [
+    "firstName","middleInitial","lastName","dob","email","zip","phone",
+    "addr1","addr2","city","state","symptoms","userId","health"
+  ];
+
+  for (let i = 0; i < ids.length; i++) {
+    const el = document.getElementById(ids[i]);
+    if (el && typeof data[ids[i]] !== "undefined" && data[ids[i]] !== null) {
+      el.value = data[ids[i]];
     }
-  });
-}
-
-function startNewUser(){
-  deleteCookie("nf_first");
-  clearAllLocal();
-  const form = document.getElementById("patientForm");
-  if(form) form.reset();
-  setHealthValue();
-  setToday();
-  loadCookieWelcome();
-}
-
-/* ===== localStorage: save non-secure fields ===== */
-const LOCAL_KEYS = [
-  "middleInitial","lastName","dob","email","phone","zip",
-  "addr1","addr2","city","state","userId","healthScale","symptoms",
-  "vaccinated","insurance","history"
-];
-
-function setLocal(key, val){
-  localStorage.setItem("nf_" + key, val);
-}
-function getLocal(key){
-  return localStorage.getItem("nf_" + key) || "";
-}
-function clearAllLocal(){
-  for(const k of LOCAL_KEYS){
-    localStorage.removeItem("nf_" + k);
-  }
-  localStorage.removeItem("nf_firstName");
-}
-
-function saveFieldToLocal(key, val){
-  const remember = document.getElementById("rememberMe");
-  if(remember && !remember.checked) return;
-  setLocal(key, val);
-}
-
-function wireLocalStorageSaving(){
-  const remember = document.getElementById("rememberMe");
-
-  const firstName = document.getElementById("firstName");
-  if(firstName){
-    firstName.addEventListener("blur", () => {
-      const v = firstName.value.trim();
-      if(remember && remember.checked && v){
-        setCookie("nf_first", v, 48);
-        loadCookieWelcome();
-      }
-    });
   }
 
-  const ids = ["middleInitial","lastName","dob","email","phone","zip","addr1","addr2","city","userId","symptoms"];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(!el) return;
-
-    el.addEventListener("blur", () => {
-      let v = el.value || "";
-      if(id === "email") v = v.trim().toLowerCase();
-      if(id === "zip") v = truncateZip(v.trim());
-      if(id === "userId") v = v.trim().toLowerCase();
-
-      el.value = v;
-      saveFieldToLocal(id, v);
-    });
-  });
-
-  const state = document.getElementById("state");
-  if(state){
-    state.addEventListener("change", () => {
-      saveFieldToLocal("state", state.value);
-    });
-  }
-
-  document.querySelectorAll('input[name="vaccinated"]').forEach(r => {
-    r.addEventListener("change", () => saveFieldToLocal("vaccinated", r.value));
-  });
-  document.querySelectorAll('input[name="insurance"]').forEach(r => {
-    r.addEventListener("change", () => saveFieldToLocal("insurance", r.value));
-  });
-
-  document.querySelectorAll('input[name="history"]').forEach(c => {
-    c.addEventListener("change", () => {
-      const vals = [];
-      document.querySelectorAll('input[name="history"]:checked').forEach(x => vals.push(x.value));
-      saveFieldToLocal("history", vals.join("|"));
-    });
-  });
-}
-
-function loadLocalStorageIntoForm(){
-  const remember = document.getElementById("rememberMe");
-  if(remember && !remember.checked) return;
-
-  const map = {
-    "middleInitial":"middleInitial",
-    "lastName":"lastName",
-    "dob":"dob",
-    "email":"email",
-    "phone":"phone",
-    "zip":"zip",
-    "addr1":"addr1",
-    "addr2":"addr2",
-    "city":"city",
-    "state":"state",
-    "userId":"userId",
-    "symptoms":"symptoms"
-  };
-
-  Object.keys(map).forEach(k => {
-    const el = document.getElementById(map[k]);
-    if(!el) return;
-    const v = getLocal(k);
-    if(v) el.value = v;
-  });
-
-  const health = getLocal("healthScale");
-  const slider = document.getElementById("healthScale");
-  if(slider && health){
-    slider.value = health;
-    setHealthValue();
-  }
-
-  const vacc = getLocal("vaccinated");
-  if(vacc){
-    const r = document.querySelector(`input[name="vaccinated"][value="${cssEscape(vacc)}"]`);
-    if(r) r.checked = true;
-  }
-
-  const ins = getLocal("insurance");
-  if(ins){
-    const r = document.querySelector(`input[name="insurance"][value="${cssEscape(ins)}"]`);
-    if(r) r.checked = true;
-  }
-
-  const hist = getLocal("history");
-  if(hist){
-    const parts = hist.split("|").filter(Boolean);
-    parts.forEach(v => {
-      const c = document.querySelector(`input[name="history"][value="${cssEscape(v)}"]`);
-      if(c) c.checked = true;
-    });
-  }
-}
-
-function cssEscape(s){
-  return String(s).replace(/"/g, '\\"');
-}
-
-function truncateZip(zip){
-  if(!zip) return "";
-  const m = zip.match(/^([0-9]{5})/);
-  return m ? m[1] : zip;
-}
-
-/* ===== Password match ===== */
-function wirePasswordMatch(){
-  const p1 = document.getElementById("password");
-  const p2 = document.getElementById("password2");
-  if(!p1 || !p2) return;
-
-  const check = () => {
-    const msg = document.getElementById("pwMsg");
-    if(!msg) return;
-
-    if(p1.value && p2.value && p1.value !== p2.value){
-      msg.textContent = "Passwords do not match.";
-    }else{
-      msg.textContent = "";
+  // checkbox history
+  if (Array.isArray(data.history)) {
+    const history = document.querySelectorAll('input[name="history"]');
+    for (let i = 0; i < history.length; i++) {
+      history[i].checked = data.history.indexOf(history[i].value) !== -1;
     }
-  };
+  }
 
-  p1.addEventListener("input", check);
-  p2.addEventListener("input", check);
+  // radios
+  setRadioValue("gender", data.gender);
+  setRadioValue("vaccinated", data.vaccinated);
+  setRadioValue("insurance", data.insurance);
+
+  updateHealthValue();
 }
 
-/* ===== Reset ===== */
-function wireReset(){
-  const reset = document.getElementById("resetBtn");
-  if(!reset) return;
+function getRadioValue(name) {
+  const nodes = document.querySelectorAll('input[name="' + name + '"]');
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i].checked) return nodes[i].value;
+  }
+  return "";
+}
 
-  reset.addEventListener("click", () => {
-    const remember = document.getElementById("rememberMe");
-    if(remember && !remember.checked){
-      deleteCookie("nf_first");
-      clearAllLocal();
-    }else{
-      clearAllLocal();
-    }
-    setTimeout(() => {
-      setHealthValue();
-      setToday();
-    }, 0);
-  });
+function setRadioValue(name, value) {
+  if (!value) return;
+  const nodes = document.querySelectorAll('input[name="' + name + '"]');
+  for (let i = 0; i < nodes.length; i++) {
+    nodes[i].checked = (nodes[i].value === value);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
