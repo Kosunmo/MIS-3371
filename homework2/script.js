@@ -3,63 +3,105 @@ Program name: script.js
 Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/07/2026
-Version: 2.0
-Description: Homework 2 review logic for patient registration form.
+Version: 2.1
+Description: Homework 2 JS for dynamic date and Review output.
 */
 
+document.addEventListener("DOMContentLoaded", function () {
+  setToday();
+});
+
+function setToday() {
+  const el = document.getElementById("today");
+  if (!el) return;
+
+  const now = new Date();
+  el.textContent = now.toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+
 function reviewForm() {
-  function val(id) {
+  const get = (id) => {
     const el = document.getElementById(id);
-    return el && el.value ? el.value.trim() : "None selected";
-  }
+    return el ? (el.value || "").trim() : "";
+  };
 
-  function radio(name) {
+  const radio = (name) => {
     const r = document.querySelector(`input[name="${name}"]:checked`);
-    return r ? r.value : "None selected";
-  }
+    return r ? r.value : "";
+  };
 
-  function checks(name) {
+  const checks = (name) => {
     const list = document.querySelectorAll(`input[name="${name}"]:checked`);
-    if (!list.length) return "None selected";
-    return Array.from(list).map(c => c.value).join(", ");
-  }
+    return list.length ? Array.from(list).map(c => c.value) : [];
+  };
+
+  const display = (v) => v ? v : "None selected";
+
+  // Name: do NOT show "None selected" for each piece
+  const first = get("firstName");
+  const mi = get("middleInitial");
+  const last = get("lastName");
+  const nameParts = [first, mi, last].filter(Boolean);
+  const fullName = nameParts.length ? nameParts.join(" ") : "None selected";
+
+  // Email and User ID: show lowercase
+  const email = get("email").toLowerCase();
+  const userId = get("userId").toLowerCase();
+
+  // Address: only show lines that exist, otherwise show None selected once
+  const addr1 = get("addr1");
+  const addr2 = get("addr2");
+  const city = get("city");
+  const state = get("state");
+  const zipRaw = get("zip");
+  const zip5 = zipRaw ? zipRaw.substring(0, 5) : "";
+
+  const addressLines = [];
+  if (addr1) addressLines.push(addr1);
+  if (addr2) addressLines.push(addr2);
+
+  const cityStateZip = [city, state, zip5].filter(Boolean).join(" ");
+  if (cityStateZip) addressLines.push(cityStateZip);
+
+  const addressDisplay = addressLines.length ? addressLines.join("<br>") : "None selected";
+
+  // Health scale
+  const health = get("healthScale");
+
+  // Symptoms
+  const symptoms = get("symptoms");
+
+  // History
+  const historyList = checks("history");
+  const historyText = historyList.length ? historyList.join(", ") : "None selected";
 
   const output =
     "<table class='reviewTable'>" +
-
-    "<tr><td>Name</td><td>" +
-      val("firstName") + " " +
-      val("middleInitial") + " " +
-      val("lastName") +
-    "</td></tr>" +
-
-    "<tr><td>Date of Birth</td><td>" + val("dob") + "</td></tr>" +
-    "<tr><td>Email</td><td>" + val("email") + "</td></tr>" +
-    "<tr><td>Phone</td><td>" + val("phone") + "</td></tr>" +
-
-    "<tr><td>Address</td><td>" +
-      val("addr1") + "<br>" +
-      (document.getElementById("addr2").value ? val("addr2") + "<br>" : "") +
-      val("city") + ", " + val("state") + " " + val("zip") +
-    "</td></tr>" +
-
-    "<tr><td>Gender</td><td>" + radio("gender") + "</td></tr>" +
-    "<tr><td>Vaccinated</td><td>" + radio("vaccinated") + "</td></tr>" +
-    "<tr><td>Insurance</td><td>" + radio("insurance") + "</td></tr>" +
-
-    "<tr><td>Medical History</td><td>" + checks("history") + "</td></tr>" +
-    "<tr><td>Health (1–10)</td><td>" + val("healthScale") + "</td></tr>" +
-    "<tr><td>Symptoms</td><td>" + val("symptoms") + "</td></tr>" +
-
-    "<tr><td>User ID</td><td>" + val("userId") + "</td></tr>" +
-    "<tr><td>Password</td><td>Hidden</td></tr>" +
-
+      "<tr><td><strong>Name</strong></td><td>" + display(fullName) + "</td></tr>" +
+      "<tr><td><strong>Date of Birth</strong></td><td>" + display(get("dob")) + "</td></tr>" +
+      "<tr><td><strong>Email</strong></td><td>" + display(email) + "</td></tr>" +
+      "<tr><td><strong>Phone</strong></td><td>" + display(get(\"phone\")) + "</td></tr>" +
+      "<tr><td><strong>Address</strong></td><td>" + addressDisplay + "</td></tr>" +
+      "<tr><td><strong>Gender</strong></td><td>" + display(radio(\"gender\")) + "</td></tr>" +
+      "<tr><td><strong>Vaccinated</strong></td><td>" + display(radio(\"vaccinated\")) + "</td></tr>" +
+      "<tr><td><strong>Insurance</strong></td><td>" + display(radio(\"insurance\")) + "</td></tr>" +
+      "<tr><td><strong>Medical History</strong></td><td>" + historyText + "</td></tr>" +
+      "<tr><td><strong>Health (1–10)</strong></td><td>" + display(health) + " <span class='hintInline'>(1 = Dead, 10 = Not Dead)</span></td></tr>" +
+      "<tr><td><strong>Describe Symptoms</strong></td><td>" + display(symptoms) + "</td></tr>" +
+      "<tr><td><strong>User ID</strong></td><td>" + display(userId) + "</td></tr>" +
+      "<tr><td><strong>Password</strong></td><td>Hidden</td></tr>" +
     "</table>";
 
-  document.getElementById("reviewOutput").innerHTML = output;
+  const out = document.getElementById("reviewOutput");
+  if (out) out.innerHTML = output;
 }
 
 function clearReview() {
-  document.getElementById("reviewOutput").textContent =
-    "Click REVIEW to display your entered information here.";
+  const out = document.getElementById("reviewOutput");
+  if (out) out.textContent = "Click REVIEW to display your entered information here.";
 }
