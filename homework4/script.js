@@ -2,8 +2,8 @@
 Program name: script.js
 Author: Kai Osunmo
 Date created: 02/07/2026
-Date last edited: 02/07/2026
-Version: 4.0
+Date last edited: 02/09/2026
+Version: 4.1
 Description: Homework 4 JS for on-the-fly validation, Fetch API states list, iFrame support,
 cookies (remember first name), and localStorage (non-secure fields). Validate button enables Submit.
 */
@@ -20,9 +20,6 @@ document.addEventListener("DOMContentLoaded", function () {
   initRemembering();           // cookie + localStorage
 });
 
-/* -----------------------------
-   Banner date
------------------------------ */
 function setToday() {
   const el = document.getElementById("today");
   if (!el) return;
@@ -36,9 +33,6 @@ function setToday() {
   });
 }
 
-/* -----------------------------
-   DOB range
------------------------------ */
 function setDobRange() {
   const dob = document.getElementById("dob");
   if (!dob) return;
@@ -58,9 +52,6 @@ function toISO(d) {
   return yyyy + "-" + mm + "-" + dd;
 }
 
-/* -----------------------------
-   Slider
------------------------------ */
 function hookSlider() {
   const slider = document.getElementById("health");
   if (!slider) return;
@@ -74,9 +65,6 @@ function updateHealthValue() {
   if (slider && out) out.textContent = slider.value;
 }
 
-/* -----------------------------
-   Fetch API: load states from separate file
------------------------------ */
 async function fetchStatesOptions() {
   const stateSel = document.getElementById("state");
   if (!stateSel) return;
@@ -96,9 +84,6 @@ async function fetchStatesOptions() {
   }
 }
 
-/* -----------------------------
-   Live validation hooks
------------------------------ */
 function hookLiveValidation() {
   const ids = [
     "firstName","middleInitial","lastName","dob","idNumber","email","zip","phone",
@@ -115,8 +100,8 @@ function hookLiveValidation() {
 
     el.addEventListener("blur", function () {
       validateField(id);
-      maybeSaveField(id);  // HW4 localStorage save on leave field
-      maybeRememberFirstName(); // HW4 cookie save
+      maybeSaveField(id);
+      maybeRememberFirstName();
     });
   });
 
@@ -147,7 +132,7 @@ function hookLiveValidation() {
     zip.value = zip.value.replace(/\D/g, "").slice(0, 5);
   });
 
-  // Save radios/checkboxes when changed (HW4 localStorage)
+  // Save radios/checkboxes/selects when changed
   const form = document.getElementById("patientForm");
   if (form) {
     form.addEventListener("change", function (e) {
@@ -164,9 +149,6 @@ function hookLiveValidation() {
   }
 }
 
-/* -----------------------------
-   Buttons
------------------------------ */
 function hookButtons() {
   const validateBtn = document.getElementById("validateBtn");
   const resetBtn = document.getElementById("resetBtn");
@@ -179,7 +161,7 @@ function hookButtons() {
       setStatus("All set. Submit is enabled.");
       if (submitBtn) submitBtn.style.display = "inline-block";
 
-      // HW4: save data if remember is on
+      // save data if remember is on
       maybeRememberFirstName();
       maybeSaveAllNonSecure();
     } else {
@@ -194,7 +176,7 @@ function hookButtons() {
     if (submitBtn) submitBtn.style.display = "none";
     updateHealthValue();
 
-    // HW4: if remember is off, clear storage/cookie
+    // if remember is off, clear storage/cookie
     handleRememberMeToggle();
   });
 
@@ -208,15 +190,12 @@ function hookButtons() {
       return;
     }
 
-    // HW4: final save before leaving page
+    // final save before leaving page
     maybeRememberFirstName();
     maybeSaveAllNonSecure();
   });
 }
 
-/* -----------------------------
-   Status + messages
------------------------------ */
 function setStatus(text) {
   const el = document.getElementById("statusBox");
   if (el) el.textContent = text;
@@ -232,9 +211,6 @@ function clearMessages() {
   for (let i = 0; i < msgs.length; i++) msgs[i].textContent = "";
 }
 
-/* -----------------------------
-   Validate all + field-level
------------------------------ */
 function validateAll() {
   let ok = true;
   const ids = [
@@ -305,10 +281,6 @@ function validateField(id) {
   return msg === "";
 }
 
-/* -----------------------------
-   HW4 Cookies + Local Storage
------------------------------ */
-
 // Cookie helpers
 function setCookie(name, value, hours) {
   const d = new Date();
@@ -331,25 +303,31 @@ function deleteCookie(name) {
   document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 }
 
-const STORAGE_KEY = "hw4_patient_nonsecure";
 const COOKIE_NAME = "hw4_firstName";
+
+// Local storage per user (key includes cookie name)
+function storageKeyForUser(name) {
+  const safe = String(name || "").trim().toLowerCase();
+  if (!safe) return "";
+  return "hw4_patient_nonsecure_" + safe;
+}
 
 function initRemembering() {
   const remember = document.getElementById("rememberMe");
   const firstNameCookie = getCookie(COOKIE_NAME);
 
-  // If cookie exists, show returning message
   if (firstNameCookie) {
     showReturningBox(firstNameCookie);
+
     // Prefill first name
     const fn = document.getElementById("firstName");
     if (fn && !fn.value) fn.value = firstNameCookie;
 
     setWelcomeLine(true, firstNameCookie);
 
-    // Load localStorage values if present
+    // Load localStorage values if remember is checked (or checkbox missing)
     if (!remember || remember.checked) {
-      loadNonSecureFromStorage();
+      loadNonSecureFromStorage(firstNameCookie);
     }
   } else {
     setWelcomeLine(false, "");
@@ -365,7 +343,7 @@ function setWelcomeLine(isReturning, name) {
 
   if (isReturning && name) {
     line.innerHTML = 'Welcome back, <strong>' + escapeHtml(name) + '</strong>. Today is: <span id="today">Loading...</span>';
-    setToday(); // refresh today span after replacing HTML
+    setToday();
   } else {
     line.innerHTML = 'Hello new user. Today is: <span id="today">Loading...</span>';
     setToday();
@@ -386,9 +364,14 @@ function handleNewUserToggle() {
   if (!chk) return;
 
   if (chk.checked) {
-    // Clear cookie + local storage and reset form
+    const priorName = getCookie(COOKIE_NAME);
+
+    // Clear cookie + this user's local storage
     deleteCookie(COOKIE_NAME);
-    localStorage.removeItem(STORAGE_KEY);
+    if (priorName) {
+      const k = storageKeyForUser(priorName);
+      if (k) localStorage.removeItem(k);
+    }
 
     const form = document.getElementById("patientForm");
     if (form) form.reset();
@@ -396,14 +379,11 @@ function handleNewUserToggle() {
     clearMessages();
     setStatus("Started as NEW USER. Saved cookie/storage cleared. Fill out the form and click VALIDATE.");
 
-    // Hide submit until revalidated
     const submitBtn = document.getElementById("submitBtn");
     if (submitBtn) submitBtn.style.display = "none";
 
-    // Update welcome line
     setWelcomeLine(false, "");
 
-    // Hide returning box after clearing
     const box = document.getElementById("returningBox");
     if (box) box.style.display = "none";
 
@@ -416,16 +396,23 @@ function handleRememberMeToggle() {
   if (!remember) return;
 
   if (!remember.checked) {
+    const priorName = getCookie(COOKIE_NAME);
+
     // Requirement: if not checked, expire cookie and delete local data
     deleteCookie(COOKIE_NAME);
-    localStorage.removeItem(STORAGE_KEY);
+    if (priorName) {
+      const k = storageKeyForUser(priorName);
+      if (k) localStorage.removeItem(k);
+    }
 
     const box = document.getElementById("returningBox");
     if (box) box.style.display = "none";
 
-    // Also hide submit until revalidated
     const submitBtn = document.getElementById("submitBtn");
     if (submitBtn) submitBtn.style.display = "none";
+
+    // IMPORTANT: update heading immediately
+    setWelcomeLine(false, "");
   } else {
     // If checked, save immediately if first name exists
     maybeRememberFirstName();
@@ -442,8 +429,9 @@ function maybeRememberFirstName() {
 
   const name = (fn.value || "").trim();
   if (name) {
-    // Requirement suggests <= 48 hours
     setCookie(COOKIE_NAME, name, 48);
+    setWelcomeLine(true, name);
+    showReturningBox(name);
   }
 }
 
@@ -460,6 +448,10 @@ function maybeSaveField(id) {
 function maybeSaveAllNonSecure() {
   const remember = document.getElementById("rememberMe");
   if (!remember || !remember.checked) return;
+
+  const name = getCookie(COOKIE_NAME);
+  const k = storageKeyForUser(name);
+  if (!k) return;
 
   const data = {};
 
@@ -486,11 +478,14 @@ function maybeSaveAllNonSecure() {
   data.vaccinated = getRadioValue("vaccinated");
   data.insurance = getRadioValue("insurance");
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  localStorage.setItem(k, JSON.stringify(data));
 }
 
-function loadNonSecureFromStorage() {
-  const raw = localStorage.getItem(STORAGE_KEY);
+function loadNonSecureFromStorage(name) {
+  const k = storageKeyForUser(name);
+  if (!k) return;
+
+  const raw = localStorage.getItem(k);
   if (!raw) return;
 
   let data;
