@@ -10,11 +10,13 @@ Description: Homework 3 JS for on-the-fly validation and Validate button that en
 document.addEventListener("DOMContentLoaded", function () {
   setToday();
   setDobRange();
+  hookSlider();
   hookLiveValidation();
   hookButtons();
-  hookSlider();
   hookFormReset();
 });
+
+/* -------- Banner date -------- */
 
 function setToday() {
   const el = document.getElementById("today");
@@ -28,6 +30,8 @@ function setToday() {
     day: "numeric",
   });
 }
+
+/* -------- DOB range -------- */
 
 function setDobRange() {
   const dob = document.getElementById("dob");
@@ -48,13 +52,10 @@ function toISO(d) {
   return yyyy + "-" + mm + "-" + dd;
 }
 
-function getSliderEl() {
-  // Supports both IDs so I don’t get stuck debugging
-  return document.getElementById("healthScale") || document.getElementById("health");
-}
+/* -------- Slider label -------- */
 
 function hookSlider() {
-  const slider = getSliderEl();
+  const slider = document.getElementById("health");
   if (!slider) return;
 
   slider.addEventListener("input", updateHealthValue);
@@ -63,10 +64,12 @@ function hookSlider() {
 }
 
 function updateHealthValue() {
-  const slider = getSliderEl();
+  const slider = document.getElementById("health");
   const out = document.getElementById("healthValue");
   if (slider && out) out.textContent = slider.value;
 }
+
+/* -------- Live validation wiring -------- */
 
 function hookLiveValidation() {
   const ids = [
@@ -82,7 +85,7 @@ function hookLiveValidation() {
     el.addEventListener("blur", function () { validateField(id); });
   });
 
-  // Normalize email/userId to lowercase on blur
+  // normalize email and userId
   const email = document.getElementById("email");
   if (email) {
     email.addEventListener("blur", function () {
@@ -99,7 +102,7 @@ function hookLiveValidation() {
     });
   }
 
-  // Digits only for ID number (max 9)
+  // ID number digits only (9)
   const idNumber = document.getElementById("idNumber");
   if (idNumber) {
     idNumber.addEventListener("input", function () {
@@ -108,7 +111,7 @@ function hookLiveValidation() {
     });
   }
 
-  // Zip digits only
+  // zip digits only (5)
   const zip = document.getElementById("zip");
   if (zip) {
     zip.addEventListener("input", function () {
@@ -117,6 +120,8 @@ function hookLiveValidation() {
     });
   }
 }
+
+/* -------- Buttons + submit gating -------- */
 
 function hookButtons() {
   const validateBtn = document.getElementById("validateBtn");
@@ -155,15 +160,16 @@ function hookFormReset() {
   if (!form) return;
 
   form.addEventListener("reset", function () {
-    // let browser reset first
     setTimeout(function () {
       clearMessages();
-      setStatus("Form cleared. Fill it out and click VALIDATE.");
       if (submitBtn) submitBtn.style.display = "none";
-      updateHealthValue();
+      setStatus("Form cleared. Fill it out and click VALIDATE.");
+      updateHealthValue(); // fixes your “number doesn’t reset” bug
     }, 0);
   });
 }
+
+/* -------- Helpers -------- */
 
 function setStatus(text) {
   const el = document.getElementById("statusBox");
@@ -180,9 +186,10 @@ function clearMessages() {
   for (let i = 0; i < msgs.length; i++) msgs[i].textContent = "";
 }
 
+/* -------- Validation logic -------- */
+
 function validateAll() {
   let ok = true;
-
   const ids = [
     "firstName","middleInitial","lastName","dob","idNumber","email","zip","phone",
     "addr1","addr2","city","state","symptoms","userId","password","password2"
@@ -192,14 +199,10 @@ function validateAll() {
     if (!validateField(ids[i])) ok = false;
   }
 
-  // Cross-field checks (only if elements exist)
-  const userIdEl = document.getElementById("userId");
-  const pw1El = document.getElementById("password");
-  const pw2El = document.getElementById("password2");
-
-  const userId = (userIdEl ? userIdEl.value : "").trim().toLowerCase();
-  const pw1 = (pw1El ? pw1El.value : "");
-  const pw2 = (pw2El ? pw2El.value : "");
+  // cross-field checks
+  const userId = (document.getElementById("userId")?.value || "").trim().toLowerCase();
+  const pw1 = document.getElementById("password")?.value || "";
+  const pw2 = document.getElementById("password2")?.value || "";
 
   if (userId && pw1 && pw1.toLowerCase() === userId) {
     ok = false;
@@ -220,7 +223,6 @@ function validateField(id) {
 
   const msgId = id + "Msg";
 
-  // Optional fields
   const optional = (id === "middleInitial" || id === "addr2" || id === "phone" || id === "symptoms");
   const raw = (el.value || "");
   const value = (id === "password" || id === "password2") ? raw : raw.trim();
@@ -232,7 +234,6 @@ function validateField(id) {
 
   let msg = "";
 
-  // JS-based rules
   if (id === "firstName") {
     if (value.length < 1 || value.length > 30) msg = "First name must be 1–30 characters.";
     else if (!/^[A-Za-z'-]+$/.test(value)) msg = "Letters, apostrophes, and dashes only.";
@@ -261,23 +262,19 @@ function validateField(id) {
   }
 
   if (id === "idNumber") {
-    if (value.length !== 9) msg = "ID Number must be exactly 9 digits.";
-    else if (!/^[0-9]{9}$/.test(value)) msg = "Digits only.";
+    if (!/^[0-9]{9}$/.test(value)) msg = "ID Number must be exactly 9 digits.";
   }
 
   if (id === "email") {
-    if (!value) msg = "Required.";
-    else if (!/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(value)) msg = "Email must be like name@domain.tld.";
-  }
-
-  if (id === "phone") {
-    // optional, but if present it must match
-    if (value && !/^[0-9]{3}-[0-9]{3}-[0-9]{4}$/.test(value)) msg = "Phone must be 000-000-0000.";
+    if (!/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(value)) msg = "Email must be like name@domain.tld.";
   }
 
   if (id === "zip") {
-    if (value.length !== 5) msg = "Zip must be 5 digits.";
-    else if (!/^[0-9]{5}$/.test(value)) msg = "Digits only.";
+    if (!/^[0-9]{5}$/.test(value)) msg = "Zip must be 5 digits.";
+  }
+
+  if (id === "phone") {
+    if (value && !/^[0-9]{3}-[0-9]{3}-[0-9]{4}$/.test(value)) msg = "Phone must be 000-000-0000.";
   }
 
   if (id === "addr1") {
@@ -302,33 +299,19 @@ function validateField(id) {
 
   if (id === "userId") {
     if (value.length < 5 || value.length > 20) msg = "User ID must be 5–20 characters.";
-    else if (!/^[a-z][a-z0-9_-]*$/.test(value)) msg = "User ID must start with a letter. Use letters/numbers/_/- only.";
+    else if (!/^[a-z][a-z0-9_-]*$/.test(value)) msg = "Start with a letter. Use letters/numbers/_/- only.";
   }
 
   if (id === "password") {
     if (value.length < 8 || value.length > 30) msg = "Password must be 8–30 characters.";
     else if (/"/.test(value)) msg = 'Password cannot contain double quotes (").';
-    else if (!/[A-Z]/.test(value)) msg = "Password needs at least 1 uppercase letter.";
-    else if (!/[a-z]/.test(value)) msg = "Password needs at least 1 lowercase letter.";
-    else if (!/[0-9]/.test(value)) msg = "Password needs at least 1 number.";
-    else if (!/[!@#%^&*()\-_+=\\\/><\.,`~]/.test(value)) msg = "Password needs at least 1 special character.";
+    else if (!/[A-Z]/.test(value)) msg = "Needs at least 1 uppercase letter.";
+    else if (!/[a-z]/.test(value)) msg = "Needs at least 1 lowercase letter.";
+    else if (!/[0-9]/.test(value)) msg = "Needs at least 1 number.";
   }
 
   if (id === "password2") {
-  
     if (!value) msg = "Required.";
-  }
-
-  // If you didn’t hit a JS rule message, fall back to HTML validity for any extras
-  if (!msg) {
-    if (!el.checkValidity()) {
-      if (el.validity.valueMissing) msg = "Required.";
-      else if (el.validity.patternMismatch) msg = "Format is not correct.";
-      else if (el.validity.tooShort) msg = "Too short.";
-      else if (el.validity.tooLong) msg = "Too long.";
-      else if (el.validity.typeMismatch) msg = "Invalid value.";
-      else msg = "Fix this field.";
-    }
   }
 
   setMsg(msgId, msg);
