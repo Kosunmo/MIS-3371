@@ -3,7 +3,7 @@ Program name: script.js
 Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/08/2026
-Version: 3.1
+Version: 3.2
 Description: Homework 3 JS for on-the-fly validation and Validate button that enables Submit.
 */
 
@@ -17,7 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* -------- Banner date -------- */
-
 function setToday() {
   const el = document.getElementById("today");
   if (!el) return;
@@ -32,7 +31,6 @@ function setToday() {
 }
 
 /* -------- DOB range -------- */
-
 function setDobRange() {
   const dob = document.getElementById("dob");
   if (!dob) return;
@@ -53,7 +51,6 @@ function toISO(d) {
 }
 
 /* -------- Slider label -------- */
-
 function hookSlider() {
   const slider = document.getElementById("health");
   if (!slider) return;
@@ -70,7 +67,6 @@ function updateHealthValue() {
 }
 
 /* -------- Live validation wiring -------- */
-
 function hookLiveValidation() {
   const ids = [
     "firstName","middleInitial","lastName","dob","idNumber","email","zip","phone",
@@ -81,8 +77,15 @@ function hookLiveValidation() {
     const el = document.getElementById(id);
     if (!el) return;
 
-    el.addEventListener("input", function () { validateField(id); });
-    el.addEventListener("blur", function () { validateField(id); });
+    el.addEventListener("input", function () {
+      const ok = validateField(id);
+      if (!ok) hideSubmit(); // submit disappears when user breaks a field
+    });
+
+    el.addEventListener("blur", function () {
+      const ok = validateField(id);
+      if (!ok) hideSubmit();
+    });
   });
 
   // normalize email and userId
@@ -90,7 +93,8 @@ function hookLiveValidation() {
   if (email) {
     email.addEventListener("blur", function () {
       email.value = email.value.trim().toLowerCase();
-      validateField("email");
+      const ok = validateField("email");
+      if (!ok) hideSubmit();
     });
   }
 
@@ -98,7 +102,8 @@ function hookLiveValidation() {
   if (userId) {
     userId.addEventListener("blur", function () {
       userId.value = userId.value.trim().toLowerCase();
-      validateField("userId");
+      const ok = validateField("userId");
+      if (!ok) hideSubmit();
     });
   }
 
@@ -107,7 +112,8 @@ function hookLiveValidation() {
   if (idNumber) {
     idNumber.addEventListener("input", function () {
       idNumber.value = idNumber.value.replace(/\D/g, "").slice(0, 9);
-      validateField("idNumber");
+      const ok = validateField("idNumber");
+      if (!ok) hideSubmit();
     });
   }
 
@@ -116,13 +122,13 @@ function hookLiveValidation() {
   if (zip) {
     zip.addEventListener("input", function () {
       zip.value = zip.value.replace(/\D/g, "").slice(0, 5);
-      validateField("zip");
+      const ok = validateField("zip");
+      if (!ok) hideSubmit();
     });
   }
 }
 
 /* -------- Buttons + submit gating -------- */
-
 function hookButtons() {
   const validateBtn = document.getElementById("validateBtn");
   const submitBtn = document.getElementById("submitBtn");
@@ -136,19 +142,18 @@ function hookButtons() {
         if (submitBtn) submitBtn.style.display = "inline-block";
       } else {
         setStatus("Fix the items shown in red, then click VALIDATE again.");
-        if (submitBtn) submitBtn.style.display = "none";
+        hideSubmit();
       }
     });
   }
 
-  // Safety: block submit if not valid
   if (form) {
     form.addEventListener("submit", function (e) {
       const ok = validateAll();
       if (!ok) {
         e.preventDefault();
         setStatus("Not submitted. Fix the items shown, then click VALIDATE.");
-        if (submitBtn) submitBtn.style.display = "none";
+        hideSubmit();
       }
     });
   }
@@ -156,21 +161,19 @@ function hookButtons() {
 
 function hookFormReset() {
   const form = document.getElementById("patientForm");
-  const submitBtn = document.getElementById("submitBtn");
   if (!form) return;
 
   form.addEventListener("reset", function () {
     setTimeout(function () {
       clearMessages();
-      if (submitBtn) submitBtn.style.display = "none";
+      hideSubmit();
       setStatus("Form cleared. Fill it out and click VALIDATE.");
-      updateHealthValue(); // fixes your “number doesn’t reset” bug
+      updateHealthValue();
     }, 0);
   });
 }
 
 /* -------- Helpers -------- */
-
 function setStatus(text) {
   const el = document.getElementById("statusBox");
   if (el) el.textContent = text;
@@ -186,8 +189,12 @@ function clearMessages() {
   for (let i = 0; i < msgs.length; i++) msgs[i].textContent = "";
 }
 
-/* -------- Validation logic -------- */
+function hideSubmit() {
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) submitBtn.style.display = "none";
+}
 
+/* -------- Validation logic -------- */
 function validateAll() {
   let ok = true;
   const ids = [
