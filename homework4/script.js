@@ -3,23 +3,28 @@ Program name: script.js
 Author: Kai Osunmo
 Date created: 02/07/2026
 Date last edited: 02/09/2026
-Version: 4.1
-Description: Homework 4 JS for on-the-fly validation, Fetch API states list, iFrame support,
-cookies (remember first name), and localStorage (non-secure fields). Validate button enables Submit.
+Version: 4.2
+Description: HW4: Uses HW3-style validation gating (any invalid change hides SUBMIT until VALIDATE),
+plus Fetch API for states, iFrame support (HTML), sticky header/fixed footer (CSS),
+cookies (remember first name), and localStorage (non-secure fields).
 */
 
 document.addEventListener("DOMContentLoaded", function () {
   setToday();
   setDobRange();
+  hookSlider();
   hookLiveValidation();
   hookButtons();
-  hookSlider();
+  hookFormReset();
 
   // HW4 additions
-  fetchStatesOptions();        // Fetch API
-  initRemembering();           // cookie + localStorage
+  fetchStatesOptions();  // Fetch API
+  initRemembering();     // cookie + localStorage
 });
 
+/* -----------------------------
+   Banner date
+----------------------------- */
 function setToday() {
   const el = document.getElementById("today");
   if (!el) return;
@@ -33,6 +38,9 @@ function setToday() {
   });
 }
 
+/* -----------------------------
+   DOB range
+----------------------------- */
 function setDobRange() {
   const dob = document.getElementById("dob");
   if (!dob) return;
@@ -52,10 +60,15 @@ function toISO(d) {
   return yyyy + "-" + mm + "-" + dd;
 }
 
+/* -----------------------------
+   Slider
+----------------------------- */
 function hookSlider() {
   const slider = document.getElementById("health");
   if (!slider) return;
+
   slider.addEventListener("input", updateHealthValue);
+  slider.addEventListener("change", updateHealthValue);
   updateHealthValue();
 }
 
@@ -65,6 +78,9 @@ function updateHealthValue() {
   if (slider && out) out.textContent = slider.value;
 }
 
+/* -----------------------------
+   Fetch API: load states from separate file
+----------------------------- */
 async function fetchStatesOptions() {
   const stateSel = document.getElementById("state");
   if (!stateSel) return;
@@ -72,18 +88,19 @@ async function fetchStatesOptions() {
   try {
     const resp = await fetch("states-options.html", { cache: "no-store" });
     if (!resp.ok) throw new Error("Fetch failed");
-
     const optionsHtml = await resp.text();
-
-    // Always keep a null option first
     stateSel.innerHTML = '<option value="">Select a State</option>' + optionsHtml;
   } catch (err) {
-    // Fallback: still allow the form to work
     stateSel.innerHTML = '<option value="">Select a State</option>';
     setStatus("Could not load states list. (Fetch API error) You can still fill out other fields.");
   }
 }
 
+/* -----------------------------
+   Live validation wiring
+   Any invalid edit hides SUBMIT until re-VALIDATE.
+   Also saves localStorage + cookie on blur/change.
+----------------------------- */
 function hookLiveValidation() {
   const ids = [
     "firstName","middleInitial","lastName","dob","idNumber","email","zip","phone",
@@ -95,107 +112,140 @@ function hookLiveValidation() {
     if (!el) return;
 
     el.addEventListener("input", function () {
-      validateField(id);
+      const ok = validateField(id);
+      if (!ok) hideSubmit();
     });
 
     el.addEventListener("blur", function () {
-      validateField(id);
-      maybeSaveField(id);
+      const ok = validateField(id);
+      if (!ok) hideSubmit();
+
+      // persistence
       maybeRememberFirstName();
+      maybeSaveField(id);
     });
   });
 
-  // Normalize email/userId to lowercase on blur
+  // normalize email and userId
   const email = document.getElementById("email");
-  if (email) email.addEventListener("blur", function () {
-    email.value = email.value.trim().toLowerCase();
-    validateField("email");
-    maybeSaveField("email");
-  });
+  if (email) {
+    email.addEventListener("blur", function () {
+      email.value = email.value.trim().toLowerCase();
+      const ok = validateField("email");
+      if (!ok) hideSubmit();
+      maybeSaveField("email");
+    });
+  }
 
   const userId = document.getElementById("userId");
-  if (userId) userId.addEventListener("blur", function () {
-    userId.value = userId.value.trim().toLowerCase();
-    validateField("userId");
-    maybeSaveField("userId");
-  });
+  if (userId) {
+    userId.addEventListener("blur", function () {
+      userId.value = userId.value.trim().toLowerCase();
+      const ok = validateField("userId");
+      if (!ok) hideSubmit();
+      maybeSaveField("userId");
+    });
+  }
 
-  // Force digits only for ID number (max 9)
+  // ID number digits only (9)
   const idNumber = document.getElementById("idNumber");
-  if (idNumber) idNumber.addEventListener("input", function () {
-    idNumber.value = idNumber.value.replace(/\D/g, "").slice(0, 9);
-  });
+  if (idNumber) {
+    idNumber.addEventListener("input", function () {
+      idNumber.value = idNumber.value.replace(/\D/g, "").slice(0, 9);
+      const ok = validateField("idNumber");
+      if (!ok) hideSubmit();
+    });
+  }
 
-  // Zip digits only (max 5)
+  // zip digits only (5)
   const zip = document.getElementById("zip");
-  if (zip) zip.addEventListener("input", function () {
-    zip.value = zip.value.replace(/\D/g, "").slice(0, 5);
-  });
+  if (zip) {
+    zip.addEventListener("input", function () {
+      zip.value = zip.value.replace(/\D/g, "").slice(0, 5);
+      const ok = validateField("zip");
+      if (!ok) hideSubmit();
+    });
+  }
 
-  // Save radios/checkboxes/selects when changed
+  // changes for checkboxes/radios/select + remember/new user toggles
   const form = document.getElementById("patientForm");
   if (form) {
     form.addEventListener("change", function (e) {
       const t = e.target;
       if (!t) return;
 
+      if (t.id === "rememberMe") handleRememberMeToggle();
+      if (t.id === "newUserChk") handleNewUserToggle();
+
       if (t.type === "checkbox" || t.type === "radio" || t.tagName === "SELECT") {
         maybeSaveAllNonSecure();
       }
-
-      if (t.id === "rememberMe") handleRememberMeToggle();
-      if (t.id === "newUserChk") handleNewUserToggle();
     });
   }
 }
 
+/* -----------------------------
+   Buttons + submit gating
+----------------------------- */
 function hookButtons() {
   const validateBtn = document.getElementById("validateBtn");
-  const resetBtn = document.getElementById("resetBtn");
   const submitBtn = document.getElementById("submitBtn");
   const form = document.getElementById("patientForm");
 
-  if (validateBtn) validateBtn.addEventListener("click", function () {
-    const ok = validateAll();
-    if (ok) {
-      setStatus("All set. Submit is enabled.");
-      if (submitBtn) submitBtn.style.display = "inline-block";
+  if (validateBtn) {
+    validateBtn.addEventListener("click", function () {
+      const ok = validateAll();
+      if (ok) {
+        setStatus("All set. Submit is enabled.");
+        if (submitBtn) submitBtn.style.display = "inline-block";
 
-      // save data if remember is on
+        // persistence on validate
+        maybeRememberFirstName();
+        maybeSaveAllNonSecure();
+      } else {
+        setStatus("Fix the items shown in red, then click VALIDATE again.");
+        hideSubmit();
+      }
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      const ok = validateAll();
+      if (!ok) {
+        e.preventDefault();
+        setStatus("Not submitted. Fix the items shown, then click VALIDATE.");
+        hideSubmit();
+        return;
+      }
+
+      // final save before leaving page
       maybeRememberFirstName();
       maybeSaveAllNonSecure();
-    } else {
-      setStatus("Fix the items shown in red, then click VALIDATE again.");
-      if (submitBtn) submitBtn.style.display = "none";
-    }
-  });
+    });
+  }
+}
 
-  if (resetBtn) resetBtn.addEventListener("click", function () {
-    clearMessages();
-    setStatus("Form cleared. Fill it out and click VALIDATE.");
-    if (submitBtn) submitBtn.style.display = "none";
-    updateHealthValue();
+function hookFormReset() {
+  const form = document.getElementById("patientForm");
+  if (!form) return;
 
-    // if remember is off, clear storage/cookie
-    handleRememberMeToggle();
-  });
+  form.addEventListener("reset", function () {
+    setTimeout(function () {
+      clearMessages();
+      hideSubmit();
+      setStatus("Form cleared. Fill it out and click VALIDATE.");
+      updateHealthValue();
 
-  // Safety: block submit if not valid
-  if (form) form.addEventListener("submit", function (e) {
-    const ok = validateAll();
-    if (!ok) {
-      e.preventDefault();
-      setStatus("Not submitted. Fix the items shown, then click VALIDATE.");
-      if (submitBtn) submitBtn.style.display = "none";
-      return;
-    }
-
-    // final save before leaving page
-    maybeRememberFirstName();
-    maybeSaveAllNonSecure();
+      // If remember is OFF, this will clear cookie/storage.
+      handleRememberMeToggle();
+    }, 0);
   });
 }
 
+/* -----------------------------
+   UI helpers
+----------------------------- */
 function setStatus(text) {
   const el = document.getElementById("statusBox");
   if (el) el.textContent = text;
@@ -211,6 +261,14 @@ function clearMessages() {
   for (let i = 0; i < msgs.length; i++) msgs[i].textContent = "";
 }
 
+function hideSubmit() {
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) submitBtn.style.display = "none";
+}
+
+/* -----------------------------
+   Validation logic
+----------------------------- */
 function validateAll() {
   let ok = true;
   const ids = [
@@ -222,10 +280,10 @@ function validateAll() {
     if (!validateField(ids[i])) ok = false;
   }
 
-  // Cross-field checks
-  const userId = (document.getElementById("userId").value || "").trim().toLowerCase();
-  const pw1 = document.getElementById("password").value || "";
-  const pw2 = document.getElementById("password2").value || "";
+  // cross-field checks
+  const userId = (document.getElementById("userId")?.value || "").trim().toLowerCase();
+  const pw1 = document.getElementById("password")?.value || "";
+  const pw2 = document.getElementById("password2")?.value || "";
 
   if (userId && pw1 && pw1.toLowerCase() === userId) {
     ok = false;
@@ -245,41 +303,105 @@ function validateField(id) {
   if (!el) return true;
 
   const msgId = id + "Msg";
-  let msg = "";
 
-  // Optional fields
   const optional = (id === "middleInitial" || id === "addr2" || id === "phone" || id === "symptoms");
-  const value = (el.value || "").trim();
+  const raw = (el.value || "");
+  const value = (id === "password" || id === "password2") ? raw : raw.trim();
+
   if (optional && value === "") {
     setMsg(msgId, "");
     return true;
   }
 
-  if (!el.checkValidity()) {
-    if (el.validity.valueMissing) msg = "Required.";
-    else if (el.validity.patternMismatch) msg = "Format is not correct.";
-    else if (el.validity.tooShort) msg = "Too short.";
-    else if (el.validity.tooLong) msg = "Too long.";
-    else if (el.validity.typeMismatch) msg = "Invalid value.";
-    else msg = "Fix this field.";
+  let msg = "";
+
+  if (id === "firstName") {
+    if (value.length < 1 || value.length > 30) msg = "First name must be 1–30 characters.";
+    else if (!/^[A-Za-z'-]+$/.test(value)) msg = "Letters, apostrophes, and dashes only.";
   }
 
-  // DOB range message
-  if (!msg && id === "dob" && value) {
-    const dobDate = new Date(value + "T00:00:00");
-    const now = new Date();
-    const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
-    const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (dobDate < min) msg = "DOB looks too far in the past.";
-    if (dobDate > max) msg = "DOB cannot be in the future.";
+  if (id === "middleInitial") {
+    if (value.length > 1) msg = "Middle initial must be 1 character.";
+    else if (value && !/^[A-Za-z]$/.test(value)) msg = "Middle initial must be a letter.";
   }
 
-  // Block double quotes in text area
-  if (!msg && id === "symptoms" && value.includes('"')) msg = 'Remove double quotes (").';
+  if (id === "lastName") {
+    if (value.length < 1 || value.length > 30) msg = "Last name must be 1–30 characters.";
+    else if (!/^[A-Za-z'-]+$/.test(value)) msg = "Letters, apostrophes, and dashes only.";
+  }
+
+  if (id === "dob") {
+    if (!value) msg = "Required.";
+    else {
+      const dobDate = new Date(value + "T00:00:00");
+      const now = new Date();
+      const min = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
+      const max = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (dobDate < min) msg = "DOB looks too far in the past.";
+      else if (dobDate > max) msg = "DOB cannot be in the future.";
+    }
+  }
+
+  if (id === "idNumber") {
+    if (!/^[0-9]{9}$/.test(value)) msg = "ID Number must be exactly 9 digits.";
+  }
+
+  if (id === "email") {
+    if (!/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(value)) msg = "Email must be like name@domain.tld.";
+  }
+
+  if (id === "zip") {
+    if (!/^[0-9]{5}$/.test(value)) msg = "Zip must be 5 digits.";
+  }
+
+  if (id === "phone") {
+    if (value && !/^[0-9]{3}-[0-9]{3}-[0-9]{4}$/.test(value)) msg = "Phone must be 000-000-0000.";
+  }
+
+  if (id === "addr1") {
+    if (value.length < 2 || value.length > 30) msg = "Address Line 1 must be 2–30 characters.";
+  }
+
+  if (id === "addr2") {
+    if (value && (value.length < 2 || value.length > 30)) msg = "Address Line 2 must be 2–30 characters if entered.";
+  }
+
+  if (id === "city") {
+    if (value.length < 2 || value.length > 30) msg = "City must be 2–30 characters.";
+  }
+
+  if (id === "state") {
+    if (!value) msg = "Select a state.";
+  }
+
+  if (id === "symptoms") {
+    if (value.includes('"')) msg = 'Remove double quotes (").';
+  }
+
+  if (id === "userId") {
+    if (value.length < 5 || value.length > 20) msg = "User ID must be 5–20 characters.";
+    else if (!/^[a-z][a-z0-9_-]*$/.test(value)) msg = "Start with a letter. Use letters/numbers/_/- only.";
+  }
+
+  if (id === "password") {
+    if (value.length < 8 || value.length > 30) msg = "Password must be 8–30 characters.";
+    else if (/"/.test(value)) msg = 'Password cannot contain double quotes (").';
+    else if (!/[A-Z]/.test(value)) msg = "Needs at least 1 uppercase letter.";
+    else if (!/[a-z]/.test(value)) msg = "Needs at least 1 lowercase letter.";
+    else if (!/[0-9]/.test(value)) msg = "Needs at least 1 number.";
+  }
+
+  if (id === "password2") {
+    if (!value) msg = "Required.";
+  }
 
   setMsg(msgId, msg);
   return msg === "";
 }
+
+/* -----------------------------
+   Cookies + Local Storage
+----------------------------- */
 
 // Cookie helpers
 function setCookie(name, value, hours) {
@@ -305,7 +427,7 @@ function deleteCookie(name) {
 
 const COOKIE_NAME = "hw4_firstName";
 
-// Local storage per user (key includes cookie name)
+// localStorage per user
 function storageKeyForUser(name) {
   const safe = String(name || "").trim().toLowerCase();
   if (!safe) return "";
@@ -319,13 +441,11 @@ function initRemembering() {
   if (firstNameCookie) {
     showReturningBox(firstNameCookie);
 
-    // Prefill first name
     const fn = document.getElementById("firstName");
     if (fn && !fn.value) fn.value = firstNameCookie;
 
     setWelcomeLine(true, firstNameCookie);
 
-    // Load localStorage values if remember is checked (or checkbox missing)
     if (!remember || remember.checked) {
       loadNonSecureFromStorage(firstNameCookie);
     }
@@ -333,7 +453,6 @@ function initRemembering() {
     setWelcomeLine(false, "");
   }
 
-  // If rememberMe unchecked at load, do not keep data
   handleRememberMeToggle();
 }
 
@@ -366,7 +485,6 @@ function handleNewUserToggle() {
   if (chk.checked) {
     const priorName = getCookie(COOKIE_NAME);
 
-    // Clear cookie + this user's local storage
     deleteCookie(COOKIE_NAME);
     if (priorName) {
       const k = storageKeyForUser(priorName);
@@ -377,10 +495,8 @@ function handleNewUserToggle() {
     if (form) form.reset();
 
     clearMessages();
+    hideSubmit();
     setStatus("Started as NEW USER. Saved cookie/storage cleared. Fill out the form and click VALIDATE.");
-
-    const submitBtn = document.getElementById("submitBtn");
-    if (submitBtn) submitBtn.style.display = "none";
 
     setWelcomeLine(false, "");
 
@@ -398,7 +514,6 @@ function handleRememberMeToggle() {
   if (!remember.checked) {
     const priorName = getCookie(COOKIE_NAME);
 
-    // Requirement: if not checked, expire cookie and delete local data
     deleteCookie(COOKIE_NAME);
     if (priorName) {
       const k = storageKeyForUser(priorName);
@@ -408,13 +523,12 @@ function handleRememberMeToggle() {
     const box = document.getElementById("returningBox");
     if (box) box.style.display = "none";
 
-    const submitBtn = document.getElementById("submitBtn");
-    if (submitBtn) submitBtn.style.display = "none";
-
-    // IMPORTANT: update heading immediately
+    hideSubmit();
     setWelcomeLine(false, "");
+
+    const chk = document.getElementById("newUserChk");
+    if (chk) chk.checked = false;
   } else {
-    // If checked, save immediately if first name exists
     maybeRememberFirstName();
     maybeSaveAllNonSecure();
   }
@@ -455,7 +569,6 @@ function maybeSaveAllNonSecure() {
 
   const data = {};
 
-  // text/select/textarea
   const ids = [
     "firstName","middleInitial","lastName","dob","email","zip","phone",
     "addr1","addr2","city","state","symptoms","userId","health"
@@ -466,14 +579,12 @@ function maybeSaveAllNonSecure() {
     if (el) data[ids[i]] = el.value;
   }
 
-  // checkboxes (history)
   const history = document.querySelectorAll('input[name="history"]');
   data.history = [];
   for (let i = 0; i < history.length; i++) {
     if (history[i].checked) data.history.push(history[i].value);
   }
 
-  // radios
   data.gender = getRadioValue("gender");
   data.vaccinated = getRadioValue("vaccinated");
   data.insurance = getRadioValue("insurance");
@@ -495,7 +606,6 @@ function loadNonSecureFromStorage(name) {
     return;
   }
 
-  // basic fields
   const ids = [
     "firstName","middleInitial","lastName","dob","email","zip","phone",
     "addr1","addr2","city","state","symptoms","userId","health"
@@ -508,7 +618,6 @@ function loadNonSecureFromStorage(name) {
     }
   }
 
-  // checkbox history
   if (Array.isArray(data.history)) {
     const history = document.querySelectorAll('input[name="history"]');
     for (let i = 0; i < history.length; i++) {
@@ -516,7 +625,6 @@ function loadNonSecureFromStorage(name) {
     }
   }
 
-  // radios
   setRadioValue("gender", data.gender);
   setRadioValue("vaccinated", data.vaccinated);
   setRadioValue("insurance", data.insurance);
